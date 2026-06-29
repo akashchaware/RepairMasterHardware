@@ -1,0 +1,673 @@
+package com.example.ui
+
+import android.app.Application
+import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.data.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+
+enum class Screen {
+    Landing,
+    CustomerDashboard,
+    NewRepairRequest,
+    RepairRequestDetail,
+    TechnicianDashboard,
+    CoordinatorDashboard,
+    RepairMasterDashboard,
+    AdminDashboard,
+    Marketplace,
+    MarketplaceDetail,
+    MarketplaceCheckout,
+    UserProfile,
+    Careers
+}
+
+class RepairViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val database = AppDatabase.getDatabase(application)
+    val repository = AppRepository(database.appDao())
+
+    // UI state streams
+    val userProfile: StateFlow<UserProfile> = repository.userProfile
+        .map { it ?: UserProfile() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UserProfile())
+
+    val allRepairRequests: StateFlow<List<RepairRequest>> = repository.allRepairRequests
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val allParts: StateFlow<List<Part>> = repository.allParts
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val allListings: StateFlow<List<Listing>> = repository.allListings
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val allOrders: StateFlow<List<Order>> = repository.allOrders
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val allJobPostings: StateFlow<List<JobPosting>> = repository.allJobPostings
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val allReviews: StateFlow<List<Review>> = repository.allReviews
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val promotions: StateFlow<List<Promotion>> = repository.promotions
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun insertPromotion(title: String, description: String, offerPrice: Double, drawableResName: String = "img_dead_phone_offer_1782763644093") {
+        viewModelScope.launch {
+            repository.insertPromotion(
+                Promotion(
+                    title = title,
+                    description = description,
+                    offerPrice = offerPrice,
+                    drawableResName = drawableResName
+                )
+            )
+        }
+    }
+
+    fun deletePromotion(id: Long) {
+        viewModelScope.launch {
+            repository.deletePromotion(id)
+        }
+    }
+
+    // Navigation and Selection States
+    var isLoggedIn = mutableStateOf(false)
+    var currentScreen = mutableStateOf(Screen.Landing)
+    var selectedRequestId = mutableStateOf<Long?>(null)
+    var selectedListingId = mutableStateOf<Long?>(null)
+
+    val allUserProfiles: StateFlow<List<UserProfile>> = repository.allUserProfiles
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Standard Sign Up
+    fun registerUser(name: String, phone: String, city: String, role: String = "CUSTOMER", onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            if (name.isBlank() || phone.isBlank() || city.isBlank()) {
+                onError("Please fill in all required fields!")
+                return@launch
+            }
+            val existing = repository.getUserProfileByPhone(phone)
+            if (existing != null) {
+                onError("This phone number is already registered. Please Sign In!")
+                return@launch
+            }
+            // Create profile
+            val newProfile = UserProfile(
+                id = phone, // unique key for this account
+                name = name,
+                phone = phone,
+                city = city,
+                role = role,
+                email = "${name.lowercase().replace(" ", "")}@gmail.com"
+            )
+            repository.updateUserProfile(newProfile)
+            
+            // Also set as current user
+            val currentUser = newProfile.copy(id = "current_user")
+            repository.updateUserProfile(currentUser)
+            
+            isLoggedIn.value = true
+            currentScreen.value = when (role) {
+                "CUSTOMER" -> Screen.CustomerDashboard
+                "MARKETPLACE_BUYER" -> Screen.Marketplace
+                "TECHNICIAN" -> Screen.TechnicianDashboard
+                "REPAIRMASTER" -> Screen.RepairMasterDashboard
+                "COORDINATOR" -> Screen.CoordinatorDashboard
+                "ADMIN" -> Screen.AdminDashboard
+                else -> Screen.CustomerDashboard
+            }
+            onSuccess()
+        }
+    }
+
+    // Standard Sign In
+    fun signInUser(phone: String, role: String, passcode: String = "", onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            if (phone.isBlank()) {
+                onError("Please enter your Nagpur Mobile Number!")
+                return@launch
+            }
+            
+            // Validate passcodes for secure/advanced roles
+            val isPasscodeValid = when (role) {
+                "CUSTOMER", "MARKETPLACE_BUYER" -> true
+                "TECHNICIAN" -> passcode == "tech@rm2024"
+                "REPAIRMASTER" -> passcode == "master@rm2024"
+                "COORDINATOR" -> passcode == "coord@rm2024"
+                "ADMIN" -> passcode == "admin@rm2024"
+                else -> false
+            }
+
+            if (!isPasscodeValid) {
+                onError("Access Denied! Incorrect passcode for $role.")
+                return@launch
+            }
+
+            val existing = repository.getUserProfileByPhone(phone)
+            if (existing == null) {
+                onError("Nagpur mobile number not registered. Please Sign Up!")
+                return@launch
+            }
+
+            if (existing.role != role) {
+                onError("Account registered as ${existing.role}, not $role. Please sign in with the correct role.")
+                return@launch
+            }
+
+            // Copy to active current user
+            val currentUser = existing.copy(id = "current_user")
+            repository.updateUserProfile(currentUser)
+            
+            isLoggedIn.value = true
+            currentScreen.value = when (role) {
+                "CUSTOMER" -> Screen.CustomerDashboard
+                "MARKETPLACE_BUYER" -> Screen.Marketplace
+                "TECHNICIAN" -> Screen.TechnicianDashboard
+                "REPAIRMASTER" -> Screen.RepairMasterDashboard
+                "COORDINATOR" -> Screen.CoordinatorDashboard
+                "ADMIN" -> Screen.AdminDashboard
+                else -> Screen.CustomerDashboard
+            }
+            onSuccess()
+        }
+    }
+
+    // Google Sign-In or Sign-Up Flow
+    fun handleGoogleAuth(email: String, name: String, phoneIfSignUp: String = "", cityIfSignUp: String = "", onSuccess: (needMoreInfo: Boolean) -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            val existing = repository.getUserProfileById(email)
+            if (existing != null) {
+                // Already registered! Just log them in.
+                val currentUser = existing.copy(id = "current_user")
+                repository.updateUserProfile(currentUser)
+                isLoggedIn.value = true
+                currentScreen.value = when (existing.role) {
+                    "CUSTOMER" -> Screen.CustomerDashboard
+                    "MARKETPLACE_BUYER" -> Screen.Marketplace
+                    "TECHNICIAN" -> Screen.TechnicianDashboard
+                    "REPAIRMASTER" -> Screen.RepairMasterDashboard
+                    "COORDINATOR" -> Screen.CoordinatorDashboard
+                    "ADMIN" -> Screen.AdminDashboard
+                    else -> Screen.CustomerDashboard
+                }
+                onSuccess(false)
+            } else {
+                // Not registered. Do we have phone and city to complete registration?
+                if (phoneIfSignUp.isBlank() || cityIfSignUp.isBlank()) {
+                    // Need more info to complete sign-up
+                    onSuccess(true)
+                } else {
+                    // Have info, create the account!
+                    val newProfile = UserProfile(
+                        id = email,
+                        name = name,
+                        phone = phoneIfSignUp,
+                        city = cityIfSignUp,
+                        email = email,
+                        role = "CUSTOMER"
+                    )
+                    repository.updateUserProfile(newProfile)
+
+                    // Set as active
+                    val currentUser = newProfile.copy(id = "current_user")
+                    repository.updateUserProfile(currentUser)
+
+                    isLoggedIn.value = true
+                    currentScreen.value = Screen.CustomerDashboard
+                    onSuccess(false)
+                }
+            }
+        }
+    }
+
+    // Logout
+    fun logout() {
+        viewModelScope.launch {
+            isLoggedIn.value = false
+            currentScreen.value = Screen.Landing
+        }
+    }
+
+    // Filter states
+    var marketplaceSearch = mutableStateOf("")
+    var marketplaceGradeFilter = mutableStateOf("All")
+    var coordinatorSearch = mutableStateOf("")
+    var coordinatorFilter = mutableStateOf("All") // All, Unassigned, Active, Completed
+
+    // Tab positions for dashboards
+    var adminSelectedTab = mutableStateOf(0)
+    var repairMasterSelectedTab = mutableStateOf(0)
+
+    init {
+        // Automatically populate initial data if database is brand new
+        repository.prepopulateIfEmpty()
+    }
+
+    // Navigation triggers
+    fun navigateTo(screen: Screen) {
+        currentScreen.value = screen
+    }
+
+    fun selectRequest(id: Long) {
+        selectedRequestId.value = id
+        navigateTo(Screen.RepairRequestDetail)
+    }
+
+    fun selectListing(id: Long) {
+        selectedListingId.value = id
+        navigateTo(Screen.MarketplaceDetail)
+    }
+
+    fun selectListingCheckout(id: Long) {
+        selectedListingId.value = id
+        navigateTo(Screen.MarketplaceCheckout)
+    }
+
+    // Core Business Logic
+
+    // Update Profile Information
+    fun updateProfile(name: String, phone: String) {
+        viewModelScope.launch {
+            val current = userProfile.value
+            repository.updateUserProfile(current.copy(name = name, phone = phone))
+        }
+    }
+
+    // Role switcher with passcode locks
+    fun switchRole(newRole: String, passcode: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            val isPasscodeValid = when (newRole) {
+                "CUSTOMER", "MARKETPLACE_BUYER" -> true
+                "TECHNICIAN" -> passcode == "tech@rm2024"
+                "REPAIRMASTER" -> passcode == "master@rm2024"
+                "COORDINATOR" -> passcode == "coord@rm2024"
+                "ADMIN" -> passcode == "admin@rm2024"
+                else -> false
+            }
+
+            if (isPasscodeValid) {
+                val current = userProfile.value
+                repository.updateUserProfile(current.copy(role = newRole))
+                currentScreen.value = when (newRole) {
+                    "CUSTOMER" -> Screen.CustomerDashboard
+                    "TECHNICIAN" -> Screen.TechnicianDashboard
+                    "REPAIRMASTER" -> Screen.RepairMasterDashboard
+                    "COORDINATOR" -> Screen.CoordinatorDashboard
+                    "ADMIN" -> Screen.AdminDashboard
+                    "MARKETPLACE_BUYER" -> Screen.Marketplace
+                    else -> Screen.CustomerDashboard
+                }
+                onSuccess()
+            } else {
+                onError("Access Denied! Incorrect passcode for $newRole.")
+            }
+        }
+    }
+
+    // Customer: Book new repair
+    fun createRepairRequest(brand: String, model: String, issue: String, city: String) {
+        viewModelScope.launch {
+            val codeNum = (1000..9999).random()
+            val request = RepairRequest(
+                code = "RM-$codeNum",
+                deviceBrand = brand,
+                deviceModel = model,
+                issueDescription = issue,
+                city = city,
+                customerName = userProfile.value.name,
+                customerPhone = userProfile.value.phone,
+                statusStep = 1 // Placed
+            )
+            repository.insertRepairRequest(request)
+            navigateTo(Screen.CustomerDashboard)
+        }
+    }
+
+    // Customer: Cancel repair
+    fun deleteRequest(requestId: Long) {
+        viewModelScope.launch {
+            repository.deleteRepairRequest(requestId)
+            navigateTo(Screen.CustomerDashboard)
+        }
+    }
+
+    // Customer: Approve quote
+    fun approveQuotation(requestId: Long) {
+        viewModelScope.launch {
+            val requests = allRepairRequests.value
+            val current = requests.find { it.id == requestId }
+            if (current != null) {
+                repository.updateRepairRequest(
+                    current.copy(
+                        isApprovedByCustomer = true,
+                        statusStep = 7 // Quotation Approved - Repairing
+                    )
+                )
+            }
+        }
+    }
+
+    // Customer: Reject quote
+    fun rejectQuotation(requestId: Long) {
+        viewModelScope.launch {
+            val requests = allRepairRequests.value
+            val current = requests.find { it.id == requestId }
+            if (current != null) {
+                repository.updateRepairRequest(
+                    current.copy(
+                        isApprovedByCustomer = false,
+                        statusStep = 11 // Completed / Terminated
+                    )
+                )
+            }
+        }
+    }
+
+    // Technician/Coordinator: Advance repair status
+    fun advanceRepairStatus(requestId: Long, nextStep: Int) {
+        viewModelScope.launch {
+            val requests = allRepairRequests.value
+            val current = requests.find { it.id == requestId }
+            if (current != null) {
+                repository.updateRepairRequest(current.copy(statusStep = nextStep))
+            }
+        }
+    }
+
+    fun setMaintenanceMode(requestId: Long, enabled: Boolean) {
+        viewModelScope.launch {
+            val requests = allRepairRequests.value
+            val current = requests.find { it.id == requestId }
+            if (current != null) {
+                repository.updateRepairRequest(current.copy(isMaintenanceModeEnabled = enabled))
+            }
+        }
+    }
+
+    // OTP: Verify pickup OTP (advances from 3 to 4)
+    fun verifyPickupOtp(requestId: Long, enteredOtp: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            val requests = allRepairRequests.value
+            val current = requests.find { it.id == requestId }
+            if (current != null) {
+                if (current.pickupOtpCode == enteredOtp) {
+                    repository.updateRepairRequest(
+                        current.copy(
+                            isPickupOtpVerified = true,
+                            statusStep = 4 // Device Received at Workshop
+                        )
+                    )
+                    onSuccess()
+                } else {
+                    onError("Invalid pickup verification code!")
+                }
+            }
+        }
+    }
+
+    // OTP: Verify delivery OTP (advances from 10 to 11)
+    fun verifyDeliveryOtp(requestId: Long, enteredOtp: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            val requests = allRepairRequests.value
+            val current = requests.find { it.id == requestId }
+            if (current != null) {
+                if (current.deliveryOtpCode == enteredOtp) {
+                    repository.updateRepairRequest(
+                        current.copy(
+                            isDeliveryOtpVerified = true,
+                            statusStep = 11 // Handed Over
+                        )
+                    )
+                    onSuccess()
+                } else {
+                    onError("Invalid delivery verification code!")
+                }
+            }
+        }
+    }
+
+    // Coordinator: Prepare Pre-Quote and Route to Repair Master
+    fun routePreQuote(requestId: Long, partsString: String, serviceCharge: Double, repairMasterId: Long) {
+        viewModelScope.launch {
+            val requests = allRepairRequests.value
+            val current = requests.find { it.id == requestId }
+            if (current != null) {
+                // Calculate total based on partsString and serviceCharge
+                val parts = partsString.split(";").filter { it.isNotBlank() }.map {
+                    val split = it.split(",")
+                    val price = split.getOrNull(1)?.toDoubleOrNull() ?: 0.0
+                    val qty = split.getOrNull(2)?.toIntOrNull() ?: 1
+                    price * qty
+                }
+                val subtotal = parts.sum()
+                val taxFee = (subtotal + serviceCharge) * (current.serviceChargePercent / 100.0)
+                val total = subtotal + serviceCharge + taxFee
+
+                repository.updateRepairRequest(
+                    current.copy(
+                        quotePartsString = partsString,
+                        quoteServiceCharge = serviceCharge,
+                        totalAmount = total,
+                        repairMasterId = repairMasterId
+                    )
+                )
+            }
+        }
+    }
+
+    // Coordinator: Assign technician to request (advances from 1 to 2)
+    fun assignTechnician(requestId: Long, techId: Long, techName: String) {
+        viewModelScope.launch {
+            val requests = allRepairRequests.value
+            val current = requests.find { it.id == requestId }
+            if (current != null) {
+                repository.updateRepairRequest(
+                    current.copy(
+                        technicianId = techId,
+                        technicianName = techName,
+                        statusStep = 2 // Technician Assigned
+                    )
+                )
+            }
+        }
+    }
+
+    // Technician: Build and Submit Quotation (advances from 5 to 6)
+    fun submitQuotation(requestId: Long, selectedParts: List<Pair<Part, Int>>, serviceCharge: Double) {
+        viewModelScope.launch {
+            val requests = allRepairRequests.value
+            val current = requests.find { it.id == requestId }
+            if (current != null) {
+                // Construct format: "Name,Price,Qty;Name,Price,Qty"
+                val partsString = selectedParts.joinToString(";") { "${it.first.name},${it.first.price},${it.second}" }
+                val subtotal = selectedParts.sumOf { it.first.price * it.second }
+                val taxFee = (subtotal + serviceCharge) * (current.serviceChargePercent / 100.0)
+                val total = subtotal + serviceCharge + taxFee
+
+                repository.updateRepairRequest(
+                    current.copy(
+                        quotePartsString = partsString,
+                        quoteServiceCharge = serviceCharge,
+                        totalAmount = total,
+                        statusStep = 6 // Quotation Awaiting Customer Approval
+                    )
+                )
+            }
+        }
+    }
+
+    // RepairMaster: Create Marketplace Listing
+    fun createListing(title: String, grade: String, storage: String, price: Double, city: String, description: String, imageUrl: String) {
+        viewModelScope.launch {
+            val listing = Listing(
+                title = title,
+                grade = grade,
+                storage = storage,
+                price = price,
+                city = city,
+                description = description,
+                imageUrl = imageUrl.ifBlank { "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500" }
+            )
+            repository.insertListing(listing)
+        }
+    }
+
+    // RepairMaster: Delete Marketplace Listing
+    fun deleteListing(listingId: Long) {
+        viewModelScope.launch {
+            repository.deleteListing(listingId)
+        }
+    }
+
+    // Buyer: Purchase a listing
+    fun purchaseListing(listingId: Long, buyerName: String, buyerPhone: String, buyerAddress: String, price: Double, onCompleted: () -> Unit) {
+        viewModelScope.launch {
+            val listingFlow = repository.getListingById(listingId)
+            val listing = listingFlow.firstOrNull()
+            if (listing != null) {
+                // 1. Mark listing as sold
+                repository.updateListing(listing.copy(isSold = true))
+                // 2. Insert Order record
+                val order = Order(
+                    listingId = listingId,
+                    listingTitle = listing.title,
+                    buyerName = buyerName,
+                    buyerPhone = buyerPhone,
+                    buyerAddress = buyerAddress,
+                    amountPaid = price
+                )
+                repository.insertOrder(order)
+                onCompleted()
+            }
+        }
+    }
+
+    // Admin: Toggle Application Approvals
+    fun approveApplication(type: String, applicantName: String) {
+        viewModelScope.launch {
+            val current = userProfile.value
+            if (type == "Technician") {
+                repository.updateUserProfile(
+                    current.copy(
+                        isTechnicianApplied = true,
+                        technicianStatus = "Approved"
+                    )
+                )
+            } else if (type == "Repair Master") {
+                repository.updateUserProfile(
+                    current.copy(
+                        isRepairMasterApplied = true,
+                        repairMasterStatus = "Approved"
+                    )
+                )
+            }
+        }
+    }
+
+    fun rejectApplication(type: String) {
+        viewModelScope.launch {
+            val current = userProfile.value
+            if (type == "Technician") {
+                repository.updateUserProfile(current.copy(technicianStatus = "Rejected"))
+            } else if (type == "Repair Master") {
+                repository.updateUserProfile(current.copy(repairMasterStatus = "Rejected"))
+            }
+        }
+    }
+
+    // Admin: Add custom spare part
+    fun addPart(name: String, price: Double, category: String) {
+        viewModelScope.launch {
+            repository.insertPart(Part(name = name, price = price, category = category))
+        }
+    }
+
+    // Admin: Delete custom spare part
+    fun deletePart(partId: Long) {
+        viewModelScope.launch {
+            repository.deletePart(partId)
+        }
+    }
+
+    // Admin: Create job postings
+    fun createJobPosting(title: String, roleType: String, location: String, description: String) {
+        viewModelScope.launch {
+            repository.insertJobPosting(
+                JobPosting(
+                    title = title,
+                    roleType = roleType,
+                    location = location,
+                    description = description
+                )
+            )
+        }
+    }
+
+    fun closeJobPosting(postingId: Long) {
+        viewModelScope.launch {
+            val postings = allJobPostings.value
+            val current = postings.find { it.id == postingId }
+            if (current != null) {
+                repository.updateJobPosting(current.copy(isClosed = true))
+            }
+        }
+    }
+
+    fun deleteJobPosting(postingId: Long) {
+        viewModelScope.launch {
+            repository.deleteJobPosting(postingId)
+        }
+    }
+
+    // Careers: Apply for role
+    fun applyForRole(role: String, applicantName: String, applicantPhone: String) {
+        viewModelScope.launch {
+            val current = userProfile.value
+            if (role == "Technician") {
+                repository.updateUserProfile(
+                    current.copy(
+                        name = applicantName,
+                        phone = applicantPhone,
+                        technicianStatus = "Pending"
+                    )
+                )
+            } else if (role == "Repair Master") {
+                repository.updateUserProfile(
+                    current.copy(
+                        name = applicantName,
+                        phone = applicantPhone,
+                        repairMasterStatus = "Pending"
+                    )
+                )
+            }
+        }
+    }
+
+    fun submitReview(
+        repairRequestId: Long,
+        customerName: String,
+        technicianId: Long?,
+        technicianName: String?,
+        techRating: Int,
+        masterRating: Int,
+        comment: String
+    ) {
+        viewModelScope.launch {
+            repository.insertReview(
+                Review(
+                    repairRequestId = repairRequestId,
+                    customerName = customerName,
+                    technicianId = technicianId,
+                    technicianName = technicianName,
+                    techRating = techRating,
+                    masterRating = masterRating,
+                    comment = comment
+                )
+            )
+        }
+    }
+}
