@@ -34,6 +34,8 @@ fun LoginView(
     var cityInput by remember { mutableStateOf("Nagpur") }
     var selectedRole by remember { mutableStateOf("CUSTOMER") }
     var passcode by remember { mutableStateOf("") }
+    var passwordInput by remember { mutableStateOf("") }
+    var confirmPasswordInput by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var successMessage by remember { mutableStateOf<String?>(null) }
     var roleExpanded by remember { mutableStateOf(false) }
@@ -138,6 +140,67 @@ fun LoginView(
                 }
             }
 
+            // Collapsible Demo Accounts Info Card
+            var showDemoAccounts by remember { mutableStateOf(false) }
+            Card(
+                colors = CardDefaults.cardColors(containerColor = NavySurface),
+                border = BorderStroke(1.dp, TealPrimary.copy(alpha = 0.4f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Info, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Preseeded Demo Accounts (Nagpur)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                        TextButton(
+                            onClick = { showDemoAccounts = !showDemoAccounts },
+                            contentPadding = PaddingValues(0.dp),
+                            modifier = Modifier.height(24.dp)
+                        ) {
+                            Text(if (showDemoAccounts) "Hide" else "Show", color = TealPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                    if (showDemoAccounts) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            listOf(
+                                Triple("Admin (Dashboard)", "+91 95225 02707", "admin@rm2024"),
+                                Triple("Customer (Self-Repair & Requests)", "+91 98230 12345", "12345"),
+                                Triple("Technician (Job Executions)", "+91 98230 55555", "tech@rm2024"),
+                                Triple("Repair Master (Retail Affiliate)", "+91 98230 77777", "master@rm2024")
+                            ).forEach { (role, phone, pwd) ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .clickable {
+                                            phoneInput = phone
+                                            passwordInput = pwd
+                                        }
+                                        .padding(vertical = 4.dp, horizontal = 6.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(role, color = AmberAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        Text("Ph: $phone", color = Color.White, fontSize = 11.sp)
+                                    }
+                                    Text("Pwd: $pwd [Tap to Fill]", color = TealPrimary, fontSize = 11.sp, modifier = Modifier.padding(top = 2.dp))
+                                }
+                                HorizontalDivider(color = GrayBorder, thickness = 0.5.dp)
+                            }
+                            Text("Note: You can log in using just the 10-digit phone number (e.g. 9522502707) or tap any demo account row above to instantly auto-fill!", color = GrayText, fontSize = 10.sp, lineHeight = 13.sp)
+                        }
+                    }
+                }
+            }
+
             // Security warning
             Surface(
                 color = NavySurface,
@@ -167,65 +230,12 @@ fun LoginView(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     if (selectedTab == 0) {
-                        // SIGN IN SCREEN
+                        // SIGN IN SCREEN - PHONE & PASSWORD ONLY
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            // Role Selection (Mandatory & Secure)
-                            Column {
-                                Text(
-                                    text = "System Access Role",
-                                    color = Color.White,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(bottom = 4.dp)
-                                )
-
-                                Box(modifier = Modifier.fillMaxWidth()) {
-                                    OutlinedButton(
-                                        onClick = { roleExpanded = true },
-                                        shape = RoundedCornerShape(8.dp),
-                                        border = BorderStroke(1.dp, GrayBorder),
-                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .testTag("login_role_dropdown_trigger")
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            val displayName = roles.firstOrNull { it.first == selectedRole }?.second ?: selectedRole
-                                            Text(text = displayName, fontSize = 13.sp, color = Color.White)
-                                            Icon(Icons.Filled.ArrowDropDown, contentDescription = "Dropdown")
-                                        }
-                                    }
-
-                                    DropdownMenu(
-                                        expanded = roleExpanded,
-                                        onDismissRequest = { roleExpanded = false },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(NavySurface)
-                                            .border(1.dp, GrayBorder, RoundedCornerShape(8.dp))
-                                    ) {
-                                        roles.forEach { (roleKey, roleName) ->
-                                            DropdownMenuItem(
-                                                text = { Text(roleName, color = Color.White, fontSize = 13.sp) },
-                                                onClick = {
-                                                    selectedRole = roleKey
-                                                    roleExpanded = false
-                                                    errorMessage = null
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
                             // Nagpur Mobile input
                             Column {
                                 Text(
-                                    text = "Registered Nagpur Mobile Number",
+                                    text = "Nagpur Mobile Number",
                                     color = Color.White,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
@@ -248,53 +258,31 @@ fun LoginView(
                                 )
                             }
 
-                            // Passcode input (if advanced role)
-                            if (selectedRole != "CUSTOMER" && selectedRole != "MARKETPLACE_BUYER") {
-                                val passHint = when (selectedRole) {
-                                    "TECHNICIAN" -> "tech@rm2024"
-                                    "REPAIRMASTER" -> "master@rm2024"
-                                    "COORDINATOR" -> "coord@rm2024"
-                                    "ADMIN" -> "admin@rm2024"
-                                    else -> ""
-                                }
-
-                                Column {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = "Security Verification Passcode",
-                                            color = Color.White,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = "Passcode Hint: $passHint",
-                                            color = AmberAccent,
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    OutlinedTextField(
-                                        value = passcode,
-                                        onValueChange = { passcode = it; errorMessage = null },
-                                        placeholder = { Text("Enter passcode", color = Color.Gray, fontSize = 13.sp) },
-                                        visualTransformation = PasswordVisualTransformation(),
-                                        colors = OutlinedTextFieldDefaults.colors(
-                                            focusedTextColor = Color.White,
-                                            unfocusedTextColor = Color.White,
-                                            focusedBorderColor = TealPrimary,
-                                            unfocusedBorderColor = GrayBorder
-                                        ),
-                                        singleLine = true,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 4.dp)
-                                            .testTag("login_passcode_input")
-                                    )
-                                }
+                            // Password Input
+                            Column {
+                                Text(
+                                    text = "Password",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                                OutlinedTextField(
+                                    value = passwordInput,
+                                    onValueChange = { passwordInput = it; errorMessage = null },
+                                    placeholder = { Text("Enter your password", color = Color.Gray, fontSize = 13.sp) },
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = TealPrimary,
+                                        unfocusedBorderColor = GrayBorder
+                                    ),
+                                    singleLine = true,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("login_password_input")
+                                )
                             }
 
                             Spacer(modifier = Modifier.height(6.dp))
@@ -302,14 +290,19 @@ fun LoginView(
                             // Submit Button
                             Button(
                                 onClick = {
-                                    if (phoneInput.isBlank()) {
+                                    val trimmedPhone = phoneInput.trim()
+                                    val trimmedPassword = passwordInput.trim()
+                                    if (trimmedPhone.isBlank()) {
                                         errorMessage = "Please enter your Nagpur Mobile Number!"
                                         return@Button
                                     }
+                                    if (trimmedPassword.isBlank()) {
+                                        errorMessage = "Please enter your Password!"
+                                        return@Button
+                                    }
                                     viewModel.signInUser(
-                                        phone = phoneInput,
-                                        role = selectedRole,
-                                        passcode = passcode,
+                                        phone = trimmedPhone,
+                                        passwordEntered = trimmedPassword,
                                         onSuccess = {
                                             errorMessage = null
                                             successMessage = "Signed in successfully!"
@@ -334,7 +327,7 @@ fun LoginView(
                             }
                         }
                     } else {
-                        // SIGN UP SCREEN (For Customers / Buyers - requires only phone & city)
+                        // SIGN UP SCREEN (For Customers & Employees - includes Name, Phone, City, Password, Confirm Password, and Role selection)
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text(
                                 text = "Create a secure Nagpur Doorstep Repair account. Fill in details to get authorized.",
@@ -422,20 +415,108 @@ fun LoginView(
                                 )
                             }
 
+                            // Role Selection - Locked to CUSTOMER for direct signup
+                            Column {
+                                Text(
+                                    text = "Account Role",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                                Card(
+                                    colors = CardDefaults.cardColors(containerColor = NavySurface),
+                                    border = BorderStroke(1.dp, GrayBorder),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Filled.Person, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp))
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Column {
+                                            Text("📱 Customer Dashboard", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                            Text("Employees must apply via the Careers section.", color = GrayText, fontSize = 11.sp)
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Password
+                            Column {
+                                Text(
+                                    text = "Create Password",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                                OutlinedTextField(
+                                    value = passwordInput,
+                                    onValueChange = { passwordInput = it; errorMessage = null },
+                                    placeholder = { Text("Choose a password", color = Color.Gray, fontSize = 13.sp) },
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = TealPrimary,
+                                        unfocusedBorderColor = GrayBorder
+                                    ),
+                                    singleLine = true,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("login_signup_password_input")
+                                )
+                            }
+
+                            // Confirm Password
+                            Column {
+                                Text(
+                                    text = "Confirm Password",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                )
+                                OutlinedTextField(
+                                    value = confirmPasswordInput,
+                                    onValueChange = { confirmPasswordInput = it; errorMessage = null },
+                                    placeholder = { Text("Re-enter your password", color = Color.Gray, fontSize = 13.sp) },
+                                    visualTransformation = PasswordVisualTransformation(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = TealPrimary,
+                                        unfocusedBorderColor = GrayBorder
+                                    ),
+                                    singleLine = true,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("login_signup_confirm_password_input")
+                                )
+                            }
+
                             Spacer(modifier = Modifier.height(6.dp))
 
                             // Submit Button
                             Button(
                                 onClick = {
-                                    if (nameInput.isBlank() || phoneInput.isBlank() || cityInput.isBlank()) {
+                                    if (nameInput.isBlank() || phoneInput.isBlank() || cityInput.isBlank() || passwordInput.isBlank() || confirmPasswordInput.isBlank()) {
                                         errorMessage = "Please fill in all details!"
+                                        return@Button
+                                    }
+                                    if (passwordInput != confirmPasswordInput) {
+                                        errorMessage = "Passwords do not match!"
                                         return@Button
                                     }
                                     viewModel.registerUser(
                                         name = nameInput,
                                         phone = phoneInput,
                                         city = cityInput,
-                                        role = "CUSTOMER",
+                                        role = selectedRole,
+                                        password = passwordInput,
+                                        confirmPassword = confirmPasswordInput,
                                         onSuccess = {
                                             errorMessage = null
                                             successMessage = "Account registered and logged in!"

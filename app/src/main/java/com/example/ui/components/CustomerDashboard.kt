@@ -30,8 +30,12 @@ fun CustomerDashboardView(
     viewModel: RepairViewModel,
     modifier: Modifier = Modifier
 ) {
-    val requests by viewModel.allRepairRequests.collectAsState()
+    val requestsAll by viewModel.allRepairRequests.collectAsState()
     val userProfile by viewModel.userProfile.collectAsState()
+
+    val requests = remember(requestsAll, userProfile) {
+        requestsAll.filter { it.customerPhone == userProfile.phone }
+    }
 
     LazyColumn(
         modifier = modifier

@@ -48,12 +48,9 @@ class MainActivity : ComponentActivity() {
                 val userProfile by viewModel.userProfile.collectAsState()
                 val isLoggedIn = viewModel.isLoggedIn.value
 
-                if (!isLoggedIn) {
-                    LoginView(viewModel = viewModel)
-                } else {
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        bottomBar = {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    bottomBar = {
                         NavigationBar(
                             containerColor = NavySurface,
                             tonalElevation = 8.dp
@@ -68,13 +65,17 @@ class MainActivity : ComponentActivity() {
                             )
 
                             // Dynamic Role-based Dashboard Tab
-                            val (dashLabel, dashIcon) = when (userProfile.role) {
-                                "CUSTOMER" -> Pair("My Repairs", Icons.Filled.Build)
-                                "TECHNICIAN" -> Pair("Tech Jobs", Icons.Filled.Build)
-                                "COORDINATOR" -> Pair("Coord Desk", Icons.Filled.Warning)
-                                "REPAIRMASTER" -> Pair("Shop Console", Icons.Filled.Star)
-                                "ADMIN" -> Pair("Admin Deck", Icons.Filled.Settings)
-                                else -> Pair("My Repairs", Icons.Filled.Build)
+                            val (dashLabel, dashIcon) = if (isLoggedIn) {
+                                when (userProfile.role) {
+                                    "CUSTOMER" -> Pair("My Repairs", Icons.Filled.Build)
+                                    "TECHNICIAN" -> Pair("Tech Jobs", Icons.Filled.Build)
+                                    "COORDINATOR" -> Pair("Coord Desk", Icons.Filled.Warning)
+                                    "REPAIRMASTER" -> Pair("Shop Console", Icons.Filled.Star)
+                                    "ADMIN" -> Pair("Admin Deck", Icons.Filled.Settings)
+                                    else -> Pair("My Repairs", Icons.Filled.Build)
+                                }
+                            } else {
+                                Pair("My Dashboard", Icons.Filled.Build)
                             }
 
                             val isDashActive = currentScreen == Screen.CustomerDashboard ||
@@ -87,15 +88,19 @@ class MainActivity : ComponentActivity() {
                             NavigationBarItem(
                                 selected = isDashActive,
                                 onClick = {
-                                    val dest = when (userProfile.role) {
-                                        "CUSTOMER" -> Screen.CustomerDashboard
-                                        "TECHNICIAN" -> Screen.TechnicianDashboard
-                                        "COORDINATOR" -> Screen.CoordinatorDashboard
-                                        "REPAIRMASTER" -> Screen.RepairMasterDashboard
-                                        "ADMIN" -> Screen.AdminDashboard
-                                        else -> Screen.CustomerDashboard
+                                    if (isLoggedIn) {
+                                        val dest = when (userProfile.role) {
+                                            "CUSTOMER" -> Screen.CustomerDashboard
+                                            "TECHNICIAN" -> Screen.TechnicianDashboard
+                                            "COORDINATOR" -> Screen.CoordinatorDashboard
+                                            "REPAIRMASTER" -> Screen.RepairMasterDashboard
+                                            "ADMIN" -> Screen.AdminDashboard
+                                            else -> Screen.CustomerDashboard
+                                        }
+                                        viewModel.navigateTo(dest)
+                                    } else {
+                                        viewModel.navigateTo(Screen.Login)
                                     }
-                                    viewModel.navigateTo(dest)
                                 },
                                 icon = { Icon(dashIcon, contentDescription = dashLabel, tint = if (isDashActive) Color.Black else Color.White) },
                                 label = { Text(dashLabel, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold) },
@@ -116,11 +121,18 @@ class MainActivity : ComponentActivity() {
                             )
 
                             // Profile/Role switcher tab
+                            val isProfileActive = currentScreen == Screen.UserProfile || currentScreen == Screen.Login
                             NavigationBarItem(
-                                selected = currentScreen == Screen.UserProfile,
-                                onClick = { viewModel.navigateTo(Screen.UserProfile) },
-                                icon = { Icon(Icons.Filled.Person, contentDescription = "Profile", tint = if (currentScreen == Screen.UserProfile) Color.Black else Color.White) },
-                                label = { Text("Profile", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold) },
+                                selected = isProfileActive,
+                                onClick = {
+                                    if (isLoggedIn) {
+                                        viewModel.navigateTo(Screen.UserProfile)
+                                    } else {
+                                        viewModel.navigateTo(Screen.Login)
+                                    }
+                                },
+                                icon = { Icon(Icons.Filled.Person, contentDescription = "Profile", tint = if (isProfileActive) Color.Black else Color.White) },
+                                label = { Text(if (isLoggedIn) "Profile" else "Sign In", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold) },
                                 modifier = Modifier.testTag("nav_profile_tab")
                             )
                         }
@@ -141,25 +153,9 @@ class MainActivity : ComponentActivity() {
                         ) { targetState ->
                             when (targetState) {
                                 Screen.Landing -> LandingView(viewModel = viewModel)
-                                Screen.CustomerDashboard -> CustomerDashboardView(viewModel = viewModel)
-                                Screen.TechnicianDashboard -> TechnicianDashboardView(viewModel = viewModel)
-                                Screen.CoordinatorDashboard -> CoordinatorDashboardView(viewModel = viewModel)
-                                Screen.RepairMasterDashboard -> RepairMasterDashboardView(viewModel = viewModel)
-                                Screen.AdminDashboard -> AdminDashboardView(viewModel = viewModel)
                                 Screen.Marketplace -> MarketplaceView(viewModel = viewModel)
-                                Screen.UserProfile -> UserProfileView(viewModel = viewModel)
                                 Screen.Careers -> CareersView(viewModel = viewModel)
-                                Screen.NewRepairRequest -> NewRepairRequestView(viewModel = viewModel)
-
-                                Screen.RepairRequestDetail -> {
-                                    val reqId = viewModel.selectedRequestId.value
-                                    if (reqId != null) {
-                                        RepairRequestDetailView(viewModel = viewModel, requestId = reqId)
-                                    } else {
-                                        viewModel.navigateTo(Screen.CustomerDashboard)
-                                    }
-                                }
-
+                                Screen.Login -> LoginView(viewModel = viewModel)
                                 Screen.MarketplaceDetail -> {
                                     val itemId = viewModel.selectedListingId.value
                                     if (itemId != null) {
@@ -168,13 +164,37 @@ class MainActivity : ComponentActivity() {
                                         viewModel.navigateTo(Screen.Marketplace)
                                     }
                                 }
-
-                                Screen.MarketplaceCheckout -> {
-                                    val itemId = viewModel.selectedListingId.value
-                                    if (itemId != null) {
-                                        MarketplaceCheckoutView(viewModel = viewModel, listingId = itemId)
+                                // Protected Screens requiring login
+                                else -> {
+                                    if (!isLoggedIn) {
+                                        LoginView(viewModel = viewModel)
                                     } else {
-                                        viewModel.navigateTo(Screen.Marketplace)
+                                        when (targetState) {
+                                            Screen.CustomerDashboard -> CustomerDashboardView(viewModel = viewModel)
+                                            Screen.TechnicianDashboard -> TechnicianDashboardView(viewModel = viewModel)
+                                            Screen.CoordinatorDashboard -> CoordinatorDashboardView(viewModel = viewModel)
+                                            Screen.RepairMasterDashboard -> RepairMasterDashboardView(viewModel = viewModel)
+                                            Screen.AdminDashboard -> AdminDashboardView(viewModel = viewModel)
+                                            Screen.NewRepairRequest -> NewRepairRequestView(viewModel = viewModel)
+                                            Screen.UserProfile -> UserProfileView(viewModel = viewModel)
+                                            Screen.RepairRequestDetail -> {
+                                                val reqId = viewModel.selectedRequestId.value
+                                                if (reqId != null) {
+                                                    RepairRequestDetailView(viewModel = viewModel, requestId = reqId)
+                                                } else {
+                                                    viewModel.navigateTo(Screen.CustomerDashboard)
+                                                }
+                                            }
+                                            Screen.MarketplaceCheckout -> {
+                                                val itemId = viewModel.selectedListingId.value
+                                                if (itemId != null) {
+                                                    MarketplaceCheckoutView(viewModel = viewModel, listingId = itemId)
+                                                } else {
+                                                    viewModel.navigateTo(Screen.Marketplace)
+                                                }
+                                            }
+                                            else -> LandingView(viewModel = viewModel)
+                                        }
                                     }
                                 }
                             }
@@ -183,7 +203,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
     }
 }
 

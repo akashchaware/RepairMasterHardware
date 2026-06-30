@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.RepairRequest
 import com.example.data.Promotion
+import com.example.data.Part
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import com.example.R
@@ -37,15 +38,18 @@ fun CoordinatorDashboardView(
     val requests by viewModel.allRepairRequests.collectAsState()
     val reviews by viewModel.allReviews.collectAsState()
     val promos by viewModel.promotions.collectAsState()
+    val parts by viewModel.allParts.collectAsState()
     val searchVal by viewModel.coordinatorSearch
     val activeFilter by viewModel.coordinatorFilter
 
     var selectedRequestForAssign by remember { mutableStateOf<RepairRequest?>(null) }
     var selectedRequestForPreQuote by remember { mutableStateOf<RepairRequest?>(null) }
+    var selectedDeskJobForQuote by remember { mutableStateOf<RepairRequest?>(null) }
     var selectedSubTab by remember { mutableStateOf(0) }
 
     // Roster of mock certified technicians
     val techniciansRoster = listOf(
+        Pair(999L, "${viewModel.userProfile.value.name} (Self)"),
         Pair(101L, "Devendra Chaudhari"),
         Pair(102L, "Rahul Deshmukh"),
         Pair(103L, "Baburao Dharaskar"),
@@ -77,7 +81,7 @@ fun CoordinatorDashboardView(
         matchesSearch && matchesFilter
     }
 
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(NavyBackground)
@@ -85,44 +89,57 @@ fun CoordinatorDashboardView(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Welcome and Role Tag
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(text = "COORDINATION PLATFORM", color = TealPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Text(text = "Central Dispatcher", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                }
-                RoleBadge(role = "COORDINATOR")
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(text = "COORDINATION PLATFORM", color = TealPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(text = "Central Dispatcher", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
             }
+            RoleBadge(role = "COORDINATOR")
         }
 
         // Sub-tab Selector
-        item {
-            TabRow(
-                selectedTabIndex = selectedSubTab,
-                containerColor = NavySurface,
-                contentColor = TealPrimary,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-            ) {
-                Tab(
-                    selected = selectedSubTab == 0,
-                    onClick = { selectedSubTab = 0 },
-                    text = { Text("Jobs & Dispatch", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = if (selectedSubTab == 0) TealPrimary else Color.White) }
-                )
-                Tab(
-                    selected = selectedSubTab == 1,
-                    onClick = { selectedSubTab = 1 },
-                    text = { Text("Manage Offers", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = if (selectedSubTab == 1) TealPrimary else Color.White) }
-                )
-            }
+        TabRow(
+            selectedTabIndex = selectedSubTab,
+            containerColor = NavySurface,
+            contentColor = TealPrimary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+        ) {
+            Tab(
+                selected = selectedSubTab == 0,
+                onClick = { selectedSubTab = 0 },
+                text = { Text("Jobs & Dispatch", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = if (selectedSubTab == 0) TealPrimary else Color.White) }
+            )
+            Tab(
+                selected = selectedSubTab == 1,
+                onClick = { selectedSubTab = 1 },
+                text = { Text("Manage Offers", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = if (selectedSubTab == 1) TealPrimary else Color.White) }
+            )
+            Tab(
+                selected = selectedSubTab == 2,
+                onClick = { selectedSubTab = 2 },
+                text = { Text("Part Inventory", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = if (selectedSubTab == 2) TealPrimary else Color.White) }
+            )
         }
 
-        if (selectedSubTab == 0) {
+        if (selectedSubTab == 2) {
+            AdminPartsPanel(
+                parts = parts,
+                onAddPart = { name, price, cat -> viewModel.addPart(name, price, cat) },
+                onDeletePart = { viewModel.deletePart(it) },
+                onUpdatePart = { id, name, price, cat -> viewModel.updatePart(id, name, price, cat) }
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                if (selectedSubTab == 0) {
             // Stats Block Grid
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -187,6 +204,186 @@ fun CoordinatorDashboardView(
                             fontSize = 12.sp,
                             lineHeight = 16.sp
                         )
+                    }
+                }
+            }
+        }
+
+        // 2.5 My Self-Assigned Desk Tasks Section
+        val deskTasks = requests.filter { (it.technicianId == 999L || it.repairMasterId == 999L) && it.statusStep < 11 }
+        if (deskTasks.isNotEmpty()) {
+            item {
+                Text(
+                    text = "My Self-Assigned Desk Tasks (${deskTasks.size})",
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                )
+            }
+            items(deskTasks) { req ->
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = NavySurface),
+                    border = BorderStroke(1.dp, TealPrimary.copy(alpha = 0.6f)),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    val isTech = req.technicianId == 999L
+                                    val isRM = req.repairMasterId == 999L
+                                    val roleLabel = if (isTech && isRM) "Tech & Master" else if (isTech) "Technician" else "Repair Master"
+                                    Surface(
+                                        color = TealPrimary.copy(alpha = 0.15f),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text(
+                                            text = roleLabel.uppercase(),
+                                            color = TealPrimary,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "${req.deviceBrand} ${req.deviceModel}",
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                                Text(
+                                    text = "Client: ${req.customerName} | Phone: ${req.customerPhone}",
+                                    color = GrayText,
+                                    fontSize = 11.sp
+                                )
+                            }
+                            RepairStatusBadge(step = req.statusStep)
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Divider(color = GrayBorder)
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Actions depending on statusStep
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            when (req.statusStep) {
+                                2 -> {
+                                    Text("Status: Assigned to me. Dispatching doorstep pickup is pending.", color = GrayText, fontSize = 12.sp)
+                                    Button(
+                                        onClick = { viewModel.advanceRepairStatus(req.id, 3) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("Dispatch Doorstep Pickup (Step 3)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+                                3 -> {
+                                    Text("Status: Pickup initiated. Secure customer OTP is ${req.pickupOtpCode ?: ""}.", color = GrayText, fontSize = 12.sp)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Button(
+                                            onClick = { viewModel.advanceRepairStatus(req.id, 4) },
+                                            colors = ButtonDefaults.buttonColors(containerColor = AccentGreen),
+                                            modifier = Modifier.weight(1f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Text("Quick Collect (Step 4)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                        }
+                                    }
+                                }
+                                4 -> {
+                                    Text("Status: Device received at workshop lab.", color = GrayText, fontSize = 12.sp)
+                                    Button(
+                                        onClick = { viewModel.advanceRepairStatus(req.id, 5) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("Start Lab Diagnosis (Step 5)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+                                5 -> {
+                                    Text("Status: Lab diagnosis is underway.", color = GrayText, fontSize = 12.sp)
+                                    Button(
+                                        onClick = { selectedDeskJobForQuote = req },
+                                        colors = ButtonDefaults.buttonColors(containerColor = AmberAccent),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("Build & Transmit Quotation", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+                                6 -> {
+                                    Text("Status: Quotation pending client signoff (Total: ₹${String.format("%.2f", req.totalAmount)}).", color = GrayText, fontSize = 12.sp)
+                                    Button(
+                                        onClick = { viewModel.advanceRepairStatus(req.id, 7) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("Force Approve Quote (Coord Override)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+                                7 -> {
+                                    Text("Status: Quote approved. Laboratory repair and testing is active.", color = GrayText, fontSize = 12.sp)
+                                    Button(
+                                        onClick = { viewModel.advanceRepairStatus(req.id, 8) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = AccentGreen),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("Finish Repair & QC Pass (Step 8)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+                                8 -> {
+                                    Text("Status: Quality control passed. Pending delivery dispatch.", color = GrayText, fontSize = 12.sp)
+                                    Button(
+                                        onClick = { viewModel.advanceRepairStatus(req.id, 9) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("Dispatch Delivery Courier (Step 9)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+                                9 -> {
+                                    Text("Status: Courier out for delivery. Handover is pending.", color = GrayText, fontSize = 12.sp)
+                                    Button(
+                                        onClick = { viewModel.advanceRepairStatus(req.id, 10) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = AmberAccent),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("Arrived & Prepare Handover (Step 10)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+                                10 -> {
+                                    Text("Status: Handover verification active. Secure handover OTP is ${req.deliveryOtpCode ?: ""}.", color = GrayText, fontSize = 12.sp)
+                                    Button(
+                                        onClick = { viewModel.advanceRepairStatus(req.id, 11) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = AccentGreen),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text("Quick Handover & Complete (Step 11)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
+                                else -> {
+                                    Text("Status: Active Lab Ticket (${req.statusStep})", color = GrayText, fontSize = 12.sp)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -306,29 +503,53 @@ fun CoordinatorDashboardView(
                             }
 
                             if (req.statusStep == 1) {
-                                if (req.repairMasterId == null) {
-                                    Button(
-                                        onClick = { selectedRequestForPreQuote = req },
-                                        colors = ButtonDefaults.buttonColors(containerColor = AmberAccent),
-                                        shape = RoundedCornerShape(8.dp),
-                                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                                        modifier = Modifier
-                                            .height(32.dp)
-                                            .testTag("coord_prepare_prequote_button_${req.id}")
-                                    ) {
-                                        Text("Prepare Pre-Quote", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                                    }
-                                } else {
-                                    Button(
-                                        onClick = { selectedRequestForAssign = req },
-                                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary),
-                                        shape = RoundedCornerShape(8.dp),
-                                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                                        modifier = Modifier
-                                            .height(32.dp)
-                                            .testTag("coord_assign_button_${req.id}")
-                                    ) {
-                                        Text("Assign Tech", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    if (req.repairMasterId == null) {
+                                        Button(
+                                            onClick = { selectedRequestForPreQuote = req },
+                                            colors = ButtonDefaults.buttonColors(containerColor = AmberAccent),
+                                            shape = RoundedCornerShape(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                            modifier = Modifier
+                                                .height(32.dp)
+                                                .testTag("coord_prepare_prequote_button_${req.id}")
+                                        ) {
+                                            Text("Prepare Pre-Quote", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                                        }
+                                        Button(
+                                            onClick = { viewModel.routePreQuote(req.id, "", 250.0, 999L) },
+                                            colors = ButtonDefaults.buttonColors(containerColor = AccentGreen),
+                                            shape = RoundedCornerShape(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                            modifier = Modifier
+                                                .height(32.dp)
+                                                .testTag("coord_self_assign_rm_button_${req.id}")
+                                        ) {
+                                            Text("Self-Assign RM", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                                        }
+                                    } else {
+                                        Button(
+                                            onClick = { selectedRequestForAssign = req },
+                                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary),
+                                            shape = RoundedCornerShape(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                            modifier = Modifier
+                                                .height(32.dp)
+                                                .testTag("coord_assign_button_${req.id}")
+                                        ) {
+                                            Text("Assign Tech", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                                        }
+                                        Button(
+                                            onClick = { viewModel.assignTechnician(req.id, 999L, viewModel.userProfile.value.name) },
+                                            colors = ButtonDefaults.buttonColors(containerColor = AccentGreen),
+                                            shape = RoundedCornerShape(8.dp),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                            modifier = Modifier
+                                                .height(32.dp)
+                                                .testTag("coord_self_assign_tech_button_${req.id}")
+                                        ) {
+                                            Text("Self-Assign Tech", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                                        }
                                     }
                                 }
                             } else {
@@ -550,6 +771,8 @@ fun CoordinatorDashboardView(
             }
         }
     }
+}
+}
 
     // Assign Technician Dialog
     if (selectedRequestForAssign != null) {
@@ -827,6 +1050,130 @@ fun CoordinatorDashboardView(
             },
             dismissButton = {
                 TextButton(onClick = { selectedRequestForPreQuote = null }) {
+                    Text("Cancel", color = GrayText)
+                }
+            },
+            containerColor = NavySurface
+        )
+    }
+
+    if (selectedDeskJobForQuote != null) {
+        val targetJob = selectedDeskJobForQuote!!
+        val dbParts = parts.filter { it.category.contains("Spare", ignoreCase = true) || it.category.contains("Part", ignoreCase = true) || it.category.contains("Mobile", ignoreCase = true) || it.category.contains("Screen", ignoreCase = true) }
+        val displayedParts = if (dbParts.isNotEmpty()) dbParts else listOf(
+            Part(id = 1, name = "Screen Display Assembly", price = 2999.0, category = "Display"),
+            Part(id = 2, name = "Premium Lithium Battery", price = 1499.0, category = "Power"),
+            Part(id = 3, name = "USB-C Charging Connector Board", price = 799.0, category = "Charging"),
+            Part(id = 4, name = "Camera Lens Glass & Module", price = 1199.0, category = "Camera")
+        )
+
+        val selectedPartsCart = remember { mutableStateMapOf<Long, Int>() }
+        var customServiceCharge by remember { mutableStateOf("300") }
+
+        AlertDialog(
+            onDismissRequest = { selectedDeskJobForQuote = null },
+            title = {
+                Text("Build & Submit Quotation", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text("Select required spare parts & set the service charge for this repair job.", color = GrayText, fontSize = 12.sp)
+
+                    Text("SELECT SPARES", color = TealPrimary, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    displayedParts.forEach { part ->
+                        val count = selectedPartsCart[part.id] ?: 0
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(NavyDark, RoundedCornerShape(8.dp))
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(part.name, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                Text("Price: ₹${part.price}", color = TealPrimary, fontSize = 11.sp)
+                            }
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (count > 0) {
+                                    IconButton(
+                                        onClick = { selectedPartsCart[part.id] = count - 1 },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Decrease", tint = Color.White)
+                                    }
+                                    Text("$count", color = Color.White, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 8.dp))
+                                }
+                                IconButton(
+                                    onClick = { selectedPartsCart[part.id] = count + 1 },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(Icons.Filled.Add, contentDescription = "Increase", tint = TealPrimary)
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text("LABOR SERVICE FEE", color = TealPrimary, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    OutlinedTextField(
+                        value = customServiceCharge,
+                        onValueChange = { customServiceCharge = it },
+                        prefix = { Text("₹", color = TealPrimary) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = TealPrimary,
+                            unfocusedBorderColor = GrayBorder
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Divider(color = GrayBorder)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    val subtotal = displayedParts.sumOf { (selectedPartsCart[it.id] ?: 0) * it.price }
+                    val laborFee = customServiceCharge.toDoubleOrNull() ?: 0.0
+                    val adminFee = (subtotal + laborFee) * (targetJob.serviceChargePercent / 100.0)
+                    val finalTotal = subtotal + laborFee + adminFee
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Parts Subtotal:", color = GrayText, fontSize = 12.sp)
+                        Text("₹${String.format("%.2f", subtotal)}", color = Color.White, fontSize = 12.sp)
+                    }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Platform Fee (${targetJob.serviceChargePercent}%):", color = GrayText, fontSize = 12.sp)
+                        Text("₹${String.format("%.2f", adminFee)}", color = GrayText, fontSize = 12.sp)
+                    }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text("Final Quote Total:", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("₹${String.format("%.2f", finalTotal)}", color = TealPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val chosenParts = displayedParts.filter { (selectedPartsCart[it.id] ?: 0) > 0 }.map { Pair(it, selectedPartsCart[it.id]!!) }
+                        val laborFee = customServiceCharge.toDoubleOrNull() ?: 300.0
+                        viewModel.submitQuotation(targetJob.id, chosenParts, laborFee)
+                        selectedDeskJobForQuote = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = TealPrimary)
+                ) {
+                    Text("Transmit Quote to Client", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { selectedDeskJobForQuote = null }) {
                     Text("Cancel", color = GrayText)
                 }
             },

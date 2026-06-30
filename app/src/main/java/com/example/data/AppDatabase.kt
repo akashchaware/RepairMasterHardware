@@ -96,6 +96,7 @@ data class UserProfile(
     val phone: String = "+91 98230 12345",
     val email: String = "rajesh.deshmukh@gmail.com",
     val city: String = "Nagpur",
+    val password: String = "12345",
     val isTechnicianApplied: Boolean = false,
     val isRepairMasterApplied: Boolean = false,
     val technicianStatus: String = "None", // None, Pending, Approved, Rejected
@@ -208,6 +209,9 @@ interface AppDao {
     @Query("SELECT * FROM user_profiles")
     fun getAllUserProfilesFlow(): Flow<List<UserProfile>>
 
+    @Query("SELECT * FROM user_profiles")
+    suspend fun getAllUserProfiles(): List<UserProfile>
+
     @Query("SELECT * FROM user_profiles WHERE id = :id")
     suspend fun getUserProfileById(id: String): UserProfile?
 
@@ -249,7 +253,7 @@ interface AppDao {
         Review::class,
         Promotion::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

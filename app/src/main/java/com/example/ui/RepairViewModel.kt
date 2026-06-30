@@ -21,7 +21,8 @@ enum class Screen {
     MarketplaceDetail,
     MarketplaceCheckout,
     UserProfile,
-    Careers
+    Careers,
+    Login
 }
 
 class RepairViewModel(application: Application) : AndroidViewModel(application) {
@@ -84,10 +85,14 @@ class RepairViewModel(application: Application) : AndroidViewModel(application) 
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Standard Sign Up
-    fun registerUser(name: String, phone: String, city: String, role: String = "CUSTOMER", onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun registerUser(name: String, phone: String, city: String, role: String = "CUSTOMER", password: String, confirmPassword: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            if (name.isBlank() || phone.isBlank() || city.isBlank()) {
+            if (name.isBlank() || phone.isBlank() || city.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
                 onError("Please fill in all required fields!")
+                return@launch
+            }
+            if (password != confirmPassword) {
+                onError("Passwords do not match!")
                 return@launch
             }
             val existing = repository.getUserProfileByPhone(phone)
@@ -102,6 +107,7 @@ class RepairViewModel(application: Application) : AndroidViewModel(application) 
                 phone = phone,
                 city = city,
                 role = role,
+                password = password,
                 email = "${name.lowercase().replace(" ", "")}@gmail.com"
             )
             repository.updateUserProfile(newProfile)
@@ -125,36 +131,141 @@ class RepairViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     // Standard Sign In
-    fun signInUser(phone: String, role: String, passcode: String = "", onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun signInUser(phone: String, passwordEntered: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             if (phone.isBlank()) {
                 onError("Please enter your Nagpur Mobile Number!")
                 return@launch
             }
-            
-            // Validate passcodes for secure/advanced roles
-            val isPasscodeValid = when (role) {
-                "CUSTOMER", "MARKETPLACE_BUYER" -> true
-                "TECHNICIAN" -> passcode == "tech@rm2024"
-                "REPAIRMASTER" -> passcode == "master@rm2024"
-                "COORDINATOR" -> passcode == "coord@rm2024"
-                "ADMIN" -> passcode == "admin@rm2024"
-                else -> false
-            }
-
-            if (!isPasscodeValid) {
-                onError("Access Denied! Incorrect passcode for $role.")
+            if (passwordEntered.isBlank()) {
+                onError("Please enter your Password!")
                 return@launch
             }
 
-            val existing = repository.getUserProfileByPhone(phone)
+            val normalizedPhone = phone.filter { it.isDigit() }
+            var existing = repository.getUserProfileByPhone(phone)
+
+            // Auto-repair/ensure preseeded demo accounts on login to prevent locking out
+            if (normalizedPhone.endsWith("9522502707")) {
+                val adminPhone = "+91 95225 02707"
+                if (existing == null) {
+                    val newAdmin = UserProfile(
+                        id = adminPhone,
+                        role = "ADMIN",
+                        name = "Admin Owner",
+                        phone = adminPhone,
+                        email = "admin.owner@gmail.com",
+                        city = "Nagpur",
+                        password = "admin@rm2024"
+                    )
+                    repository.updateUserProfile(newAdmin)
+                    existing = newAdmin
+                } else if (existing.password != "admin@rm2024" || existing.role != "ADMIN") {
+                    val updatedAdmin = existing.copy(
+                        role = "ADMIN",
+                        password = "admin@rm2024"
+                    )
+                    repository.updateUserProfile(updatedAdmin)
+                    existing = updatedAdmin
+                }
+            } else if (normalizedPhone.endsWith("9823055555")) {
+                val techPhone = "+91 98230 55555"
+                if (existing == null) {
+                    val newTech = UserProfile(
+                        id = techPhone,
+                        role = "TECHNICIAN",
+                        name = "Amit Sharma",
+                        phone = techPhone,
+                        email = "amit.sharma@gmail.com",
+                        city = "Nagpur",
+                        password = "tech@rm2024",
+                        technicianStatus = "Approved"
+                    )
+                    repository.updateUserProfile(newTech)
+                    existing = newTech
+                } else if (existing.password != "tech@rm2024" || existing.role != "TECHNICIAN" || existing.technicianStatus != "Approved") {
+                    val updatedTech = existing.copy(
+                        role = "TECHNICIAN",
+                        password = "tech@rm2024",
+                        technicianStatus = "Approved"
+                    )
+                    repository.updateUserProfile(updatedTech)
+                    existing = updatedTech
+                }
+            } else if (normalizedPhone.endsWith("9823077777")) {
+                val masterPhone = "+91 98230 77777"
+                if (existing == null) {
+                    val newMaster = UserProfile(
+                        id = masterPhone,
+                        role = "REPAIRMASTER",
+                        name = "Vinay Patel",
+                        phone = masterPhone,
+                        email = "vinay.patel@gmail.com",
+                        city = "Nagpur",
+                        password = "master@rm2024",
+                        repairMasterStatus = "Approved"
+                    )
+                    repository.updateUserProfile(newMaster)
+                    existing = newMaster
+                } else if (existing.password != "master@rm2024" || existing.role != "REPAIRMASTER" || existing.repairMasterStatus != "Approved") {
+                    val updatedMaster = existing.copy(
+                        role = "REPAIRMASTER",
+                        password = "master@rm2024",
+                        repairMasterStatus = "Approved"
+                    )
+                    repository.updateUserProfile(updatedMaster)
+                    existing = updatedMaster
+                }
+            } else if (normalizedPhone.endsWith("9823012345")) {
+                val custPhone = "+91 98230 12345"
+                if (existing == null) {
+                    val newCust = UserProfile(
+                        id = custPhone,
+                        role = "CUSTOMER",
+                        name = "Rajesh Deshmukh",
+                        phone = custPhone,
+                        email = "rajesh.deshmukh@gmail.com",
+                        city = "Nagpur",
+                        password = "12345"
+                    )
+                    repository.updateUserProfile(newCust)
+                    existing = newCust
+                } else if (existing.password != "12345" || existing.role != "CUSTOMER") {
+                    val updatedCust = existing.copy(
+                        role = "CUSTOMER",
+                        password = "12345"
+                    )
+                    repository.updateUserProfile(updatedCust)
+                    existing = updatedCust
+                }
+            }
+
             if (existing == null) {
                 onError("Nagpur mobile number not registered. Please Sign Up!")
                 return@launch
             }
 
-            if (existing.role != role) {
-                onError("Account registered as ${existing.role}, not $role. Please sign in with the correct role.")
+            if (existing.password != passwordEntered) {
+                onError("Incorrect password. Please try again!")
+                return@launch
+            }
+
+            // Employee authorization checks
+            if (existing.role == "TECHNICIAN" && existing.technicianStatus != "Approved") {
+                when (existing.technicianStatus) {
+                    "Pending" -> onError("Your application is currently pending admin review. Please wait for authorization!")
+                    "Rejected" -> onError("Your application has been rejected by the administrator.")
+                    else -> onError("You must apply for a Technician position first and be approved!")
+                }
+                return@launch
+            }
+
+            if (existing.role == "REPAIRMASTER" && existing.repairMasterStatus != "Approved") {
+                when (existing.repairMasterStatus) {
+                    "Pending" -> onError("Your store application is currently pending admin review. Please wait for authorization!")
+                    "Rejected" -> onError("Your application has been rejected by the administrator.")
+                    else -> onError("You must apply for a Repair Master position first and be approved!")
+                }
                 return@launch
             }
 
@@ -163,7 +274,7 @@ class RepairViewModel(application: Application) : AndroidViewModel(application) 
             repository.updateUserProfile(currentUser)
             
             isLoggedIn.value = true
-            currentScreen.value = when (role) {
+            currentScreen.value = when (existing.role) {
                 "CUSTOMER" -> Screen.CustomerDashboard
                 "MARKETPLACE_BUYER" -> Screen.Marketplace
                 "TECHNICIAN" -> Screen.TechnicianDashboard
@@ -280,7 +391,19 @@ class RepairViewModel(application: Application) : AndroidViewModel(application) 
     // Role switcher with passcode locks
     fun switchRole(newRole: String, passcode: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            val isPasscodeValid = when (newRole) {
+            val dbProfile = repository.getUserProfileByPhone(userProfile.value.phone)
+            val assignedRoles = dbProfile?.role?.split(",")?.map { it.trim().uppercase() } ?: emptyList()
+            val isAlreadyAuthorized = assignedRoles.contains(newRole.uppercase())
+
+            // Strict Admin Security Check: Nobody can switch to ADMIN unless they are already officially ADMIN in the database.
+            if (newRole == "ADMIN") {
+                if (dbProfile == null || !assignedRoles.contains("ADMIN")) {
+                    onError("Access Denied! You must be registered as an ADMIN in the database to use this role.")
+                    return@launch
+                }
+            }
+
+            val isPasscodeValid = isAlreadyAuthorized || when (newRole) {
                 "CUSTOMER", "MARKETPLACE_BUYER" -> true
                 "TECHNICIAN" -> passcode == "tech@rm2024"
                 "REPAIRMASTER" -> passcode == "master@rm2024"
@@ -291,7 +414,18 @@ class RepairViewModel(application: Application) : AndroidViewModel(application) 
 
             if (isPasscodeValid) {
                 val current = userProfile.value
-                repository.updateUserProfile(current.copy(role = newRole))
+                val updatedCurrent = current.copy(role = newRole)
+                repository.updateUserProfile(updatedCurrent)
+
+                // Add to persistent DB profile list if they used a valid passcode
+                if (dbProfile != null && !isAlreadyAuthorized) {
+                    val currentRoles = dbProfile.role.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+                    if (!currentRoles.contains(newRole)) {
+                        currentRoles.add(newRole)
+                    }
+                    repository.updateUserProfile(dbProfile.copy(role = currentRoles.joinToString(",")))
+                }
+
                 currentScreen.value = when (newRole) {
                     "CUSTOMER" -> Screen.CustomerDashboard
                     "TECHNICIAN" -> Screen.TechnicianDashboard
@@ -546,35 +680,68 @@ class RepairViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // Admin: Toggle Application Approvals
-    fun approveApplication(type: String, applicantName: String) {
+    // Admin: Toggle Application Approvals by phone
+    fun approveApplication(phone: String, type: String) {
         viewModelScope.launch {
-            val current = userProfile.value
-            if (type == "Technician") {
-                repository.updateUserProfile(
-                    current.copy(
-                        isTechnicianApplied = true,
-                        technicianStatus = "Approved"
+            val profile = repository.getUserProfileByPhone(phone)
+            if (profile != null) {
+                if (type.contains("Technician", ignoreCase = true)) {
+                    repository.updateUserProfile(
+                        profile.copy(
+                            isTechnicianApplied = true,
+                            technicianStatus = "Approved",
+                            role = "TECHNICIAN"
+                        )
                     )
-                )
-            } else if (type == "Repair Master") {
-                repository.updateUserProfile(
-                    current.copy(
-                        isRepairMasterApplied = true,
-                        repairMasterStatus = "Approved"
+                } else if (type.contains("Repair Master", ignoreCase = true)) {
+                    repository.updateUserProfile(
+                        profile.copy(
+                            isRepairMasterApplied = true,
+                            repairMasterStatus = "Approved",
+                            role = "REPAIRMASTER"
+                        )
                     )
-                )
+                }
             }
         }
     }
 
-    fun rejectApplication(type: String) {
+    fun rejectApplication(phone: String, type: String) {
         viewModelScope.launch {
-            val current = userProfile.value
-            if (type == "Technician") {
-                repository.updateUserProfile(current.copy(technicianStatus = "Rejected"))
-            } else if (type == "Repair Master") {
-                repository.updateUserProfile(current.copy(repairMasterStatus = "Rejected"))
+            val profile = repository.getUserProfileByPhone(phone)
+            if (profile != null) {
+                if (type.contains("Technician", ignoreCase = true)) {
+                    repository.updateUserProfile(profile.copy(technicianStatus = "Rejected"))
+                } else if (type.contains("Repair Master", ignoreCase = true)) {
+                    repository.updateUserProfile(profile.copy(repairMasterStatus = "Rejected"))
+                }
+            }
+        }
+    }
+
+    fun updateUserRole(phone: String, newRole: String) {
+        viewModelScope.launch {
+            val profile = repository.getUserProfileByPhone(phone)
+            if (profile != null) {
+                // Safeguard: Do not allow altering own admin role if you are the master owner
+                if (profile.phone == "+91 95225 02707" && newRole != "ADMIN") {
+                    return@launch
+                }
+                repository.updateUserProfile(profile.copy(role = newRole))
+            }
+        }
+    }
+
+    fun updateUserRolesList(phone: String, roles: List<String>) {
+        viewModelScope.launch {
+            val profile = repository.getUserProfileByPhone(phone)
+            if (profile != null) {
+                // Safeguard: Do not allow altering own admin role if you are the master owner
+                if (profile.phone == "+91 95225 02707" && !roles.contains("ADMIN")) {
+                    return@launch
+                }
+                val rolesString = roles.joinToString(",")
+                repository.updateUserProfile(profile.copy(role = rolesString))
             }
         }
     }
@@ -583,6 +750,13 @@ class RepairViewModel(application: Application) : AndroidViewModel(application) 
     fun addPart(name: String, price: Double, category: String) {
         viewModelScope.launch {
             repository.insertPart(Part(name = name, price = price, category = category))
+        }
+    }
+
+    // Admin/Coordinator: Update existing spare part
+    fun updatePart(partId: Long, name: String, price: Double, category: String) {
+        viewModelScope.launch {
+            repository.insertPart(Part(id = partId, name = name, price = price, category = category))
         }
     }
 
@@ -623,27 +797,22 @@ class RepairViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // Careers: Apply for role
-    fun applyForRole(role: String, applicantName: String, applicantPhone: String) {
+    // Careers: Apply for role with password and city
+    fun applyForRole(role: String, applicantName: String, applicantPhone: String, city: String, password: String) {
         viewModelScope.launch {
-            val current = userProfile.value
-            if (role == "Technician") {
-                repository.updateUserProfile(
-                    current.copy(
-                        name = applicantName,
-                        phone = applicantPhone,
-                        technicianStatus = "Pending"
-                    )
-                )
-            } else if (role == "Repair Master") {
-                repository.updateUserProfile(
-                    current.copy(
-                        name = applicantName,
-                        phone = applicantPhone,
-                        repairMasterStatus = "Pending"
-                    )
-                )
-            }
+            val newProfile = UserProfile(
+                id = applicantPhone,
+                phone = applicantPhone,
+                name = applicantName,
+                city = city,
+                password = password,
+                role = if (role.contains("Technician", ignoreCase = true)) "TECHNICIAN" else "REPAIRMASTER",
+                technicianStatus = if (role.contains("Technician", ignoreCase = true)) "Pending" else "None",
+                repairMasterStatus = if (role.contains("Repair Master", ignoreCase = true)) "Pending" else "None",
+                isTechnicianApplied = if (role.contains("Technician", ignoreCase = true)) true else false,
+                isRepairMasterApplied = if (role.contains("Repair Master", ignoreCase = true)) true else false
+            )
+            repository.updateUserProfile(newProfile)
         }
     }
 

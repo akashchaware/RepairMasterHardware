@@ -136,6 +136,8 @@ fun CareersView(
         val targetJob = selectedPostingForApply!!
         var applicantName by remember { mutableStateOf(userProfile.name) }
         var applicantPhone by remember { mutableStateOf(userProfile.phone) }
+        var applicantCity by remember { mutableStateOf(userProfile.city.ifBlank { "Nagpur" }) }
+        var applicantPassword by remember { mutableStateOf("") }
         var coverNote by remember { mutableStateOf("") }
         var errorMsg by remember { mutableStateOf<String?>(null) }
 
@@ -187,6 +189,42 @@ fun CareersView(
                             .testTag("applicant_phone_input")
                     )
 
+                    // City
+                    Text("Operating City", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = applicantCity,
+                        onValueChange = { applicantCity = it },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = TealPrimary,
+                            unfocusedBorderColor = GrayBorder
+                        ),
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                            .testTag("applicant_city_input")
+                    )
+
+                    // Password
+                    Text("Choose Password (for Sign In on Approval)", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = applicantPassword,
+                        onValueChange = { applicantPassword = it },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = TealPrimary,
+                            unfocusedBorderColor = GrayBorder
+                        ),
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                            .testTag("applicant_password_input")
+                    )
+
                     // Cover Note
                     Text("Credentials or Experience Cover Note", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     OutlinedTextField(
@@ -214,10 +252,10 @@ fun CareersView(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (applicantName.isBlank() || applicantPhone.isBlank() || coverNote.isBlank()) {
-                            errorMsg = "All details are required to evaluate credentials!"
+                        if (applicantName.isBlank() || applicantPhone.isBlank() || applicantCity.isBlank() || applicantPassword.isBlank() || coverNote.isBlank()) {
+                            errorMsg = "All details (including operating city and sign-in password) are required to evaluate credentials!"
                         } else {
-                            viewModel.applyForRole(targetJob.roleType, applicantName, applicantPhone)
+                            viewModel.applyForRole(targetJob.roleType, applicantName, applicantPhone, applicantCity, applicantPassword)
                             selectedPostingForApply = null
                             applicationSubmittedCode = targetJob.roleType
                         }

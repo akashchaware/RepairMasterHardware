@@ -46,8 +46,11 @@ fun RepairMasterDashboardView(
     val activeListings = listings.filter { !it.isSold }
     val soldListings = listings.filter { it.isSold }
     val totalRevenue = orders.sumOf { it.amountPaid }
-    val activeJobs = requests.filter { it.statusStep < 11 }
-    val completedJobs = requests.filter { it.statusStep == 11 }
+    val myRequests = remember(requests, userProfile) {
+        requests.filter { it.repairMasterId != null }
+    }
+    val activeJobs = myRequests.filter { it.statusStep < 11 }
+    val completedJobs = myRequests.filter { it.statusStep == 11 }
 
     Column(
         modifier = modifier
@@ -126,7 +129,7 @@ fun RepairMasterDashboardView(
                     onDeleteListing = { viewModel.deleteListing(it) }
                 )
                 2 -> OrdersTab(orders = orders)
-                3 -> RepairsTab(requests = requests, onSelect = { viewModel.selectRequest(it) })
+                3 -> RepairsTab(requests = myRequests, onSelect = { viewModel.selectRequest(it) })
             }
         }
     }

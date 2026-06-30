@@ -36,11 +36,11 @@ fun TechnicianDashboardView(
     val parts by viewModel.allParts.collectAsState()
     val userProfile by viewModel.userProfile.collectAsState()
 
-    // Filter jobs assigned to this technician.
-    // For local mockup/testing ease, we show all active jobs in the system,
-    // highlighting the ones assigned to "Devendra Chaudhari" (ID 101) or letting them work on any job.
-    val activeJobs = requests.filter { it.statusStep < 11 }
-    val completedJobs = requests.filter { it.statusStep == 11 }
+    val myRequests = remember(requests, userProfile) {
+        requests.filter { it.technicianName.equals(userProfile.name, ignoreCase = true) }
+    }
+    val activeJobs = myRequests.filter { it.statusStep < 11 }
+    val completedJobs = myRequests.filter { it.statusStep == 11 }
 
     var selectedJobForQuote by remember { mutableStateOf<RepairRequest?>(null) }
     var selectedJobForPickupOtp by remember { mutableStateOf<RepairRequest?>(null) }

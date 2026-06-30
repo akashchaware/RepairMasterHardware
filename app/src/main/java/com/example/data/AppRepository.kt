@@ -16,7 +16,22 @@ class AppRepository(private val appDao: AppDao) {
     val allUserProfiles: Flow<List<UserProfile>> = appDao.getAllUserProfilesFlow()
 
     suspend fun getUserProfileById(id: String): UserProfile? = appDao.getUserProfileById(id)
-    suspend fun getUserProfileByPhone(phone: String): UserProfile? = appDao.getUserProfileByPhone(phone)
+    suspend fun getUserProfileByPhone(phone: String): UserProfile? {
+        val direct = appDao.getUserProfileByPhone(phone)
+        if (direct != null) return direct
+
+        // Robust last-10-digit matching fallback to support flexible inputs
+        val normalizedInput = phone.filter { it.isDigit() }
+        val last10Input = if (normalizedInput.length >= 10) normalizedInput.takeLast(10) else normalizedInput
+        if (last10Input.isBlank()) return null
+
+        val allProfiles = appDao.getAllUserProfiles()
+        return allProfiles.find { profile ->
+            val normalizedProfilePhone = profile.phone.filter { it.isDigit() }
+            val last10Profile = if (normalizedProfilePhone.length >= 10) normalizedProfilePhone.takeLast(10) else normalizedProfilePhone
+            last10Profile.isNotEmpty() && last10Input == last10Profile
+        }
+    }
     val allJobPostings: Flow<List<JobPosting>> = appDao.getAllJobPostings()
     val allReviews: Flow<List<Review>> = appDao.getAllReviews()
     val promotions: Flow<List<Promotion>> = appDao.getAllPromotions()
@@ -60,7 +75,8 @@ class AppRepository(private val appDao: AppDao) {
                     name = "Rajesh Deshmukh",
                     phone = "+91 98230 12345",
                     email = "rajesh.deshmukh@gmail.com",
-                    city = "Nagpur"
+                    city = "Nagpur",
+                    password = "12345"
                 )
                 val technician = UserProfile(
                     id = "+91 98230 55555",
@@ -68,7 +84,8 @@ class AppRepository(private val appDao: AppDao) {
                     name = "Amit Sharma",
                     phone = "+91 98230 55555",
                     email = "amit.sharma@gmail.com",
-                    city = "Nagpur"
+                    city = "Nagpur",
+                    password = "tech@rm2024"
                 )
                 val repairMaster = UserProfile(
                     id = "+91 98230 77777",
@@ -76,15 +93,17 @@ class AppRepository(private val appDao: AppDao) {
                     name = "Vinay Patel",
                     phone = "+91 98230 77777",
                     email = "vinay.patel@gmail.com",
-                    city = "Nagpur"
+                    city = "Nagpur",
+                    password = "master@rm2024"
                 )
                 val admin = UserProfile(
-                    id = "+91 98230 99999",
+                    id = "+91 95225 02707",
                     role = "ADMIN",
                     name = "Admin Owner",
-                    phone = "+91 98230 99999",
+                    phone = "+91 95225 02707",
                     email = "admin.owner@gmail.com",
-                    city = "Nagpur"
+                    city = "Nagpur",
+                    password = "admin@rm2024"
                 )
 
                 // Insert into profiles
@@ -95,6 +114,31 @@ class AppRepository(private val appDao: AppDao) {
 
                 // Set default starting user as current_user
                 appDao.insertUserProfile(customer.copy(id = "current_user"))
+            }
+
+            // 1b. Always ensure the main admin is present & up-to-date with correct password and role
+            val mainAdminPhone = "+91 95225 02707"
+            val existingAdmin = appDao.getUserProfileById(mainAdminPhone)
+            if (existingAdmin == null) {
+                appDao.insertUserProfile(
+                    UserProfile(
+                        id = mainAdminPhone,
+                        role = "ADMIN",
+                        name = "Admin Owner",
+                        phone = mainAdminPhone,
+                        email = "admin.owner@gmail.com",
+                        city = "Nagpur",
+                        password = "admin@rm2024"
+                    )
+                )
+            } else {
+                appDao.insertUserProfile(
+                    existingAdmin.copy(
+                        role = "ADMIN",
+                        phone = mainAdminPhone,
+                        password = "admin@rm2024"
+                    )
+                )
             }
 
             // 2. Prepopulate Parts if empty

@@ -78,37 +78,48 @@ fun LandingView(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    color = NavySurface,
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.clickable { viewModel.navigateTo(Screen.UserProfile) }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                if (viewModel.isLoggedIn.value) {
+                    Surface(
+                        color = NavySurface,
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier.clickable { viewModel.navigateTo(Screen.UserProfile) }
                     ) {
-                        Icon(Icons.Filled.Person, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = userProfile.name.split(" ").firstOrNull() ?: "Profile", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Filled.Person, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = userProfile.name.split(" ").firstOrNull() ?: "Profile", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                IconButton(
-                    onClick = {
-                        viewModel.isLoggedIn.value = false
-                        viewModel.navigateTo(Screen.Landing)
-                    },
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(NavySurface, CircleShape)
-                        .testTag("home_logout_button")
-                ) {
-                    Icon(
-                        Icons.Filled.ExitToApp,
-                        contentDescription = "Log Out",
-                        tint = AccentRed,
-                        modifier = Modifier.size(16.dp)
-                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = {
+                            viewModel.isLoggedIn.value = false
+                            viewModel.navigateTo(Screen.Landing)
+                        },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(NavySurface, CircleShape)
+                            .testTag("home_logout_button")
+                    ) {
+                        Icon(
+                            Icons.Filled.ExitToApp,
+                            contentDescription = "Log Out",
+                            tint = AccentRed,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                } else {
+                    Button(
+                        onClick = { viewModel.navigateTo(Screen.Login) },
+                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary),
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.testTag("home_signin_button")
+                    ) {
+                        Text("Sign In", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -462,16 +473,13 @@ fun LandingView(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 6.dp),
-                                shape = RoundedCornerShape(12.dp),
+                                    .padding(vertical = 8.dp),
+                                shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(containerColor = NavySurface),
-                                border = BorderStroke(1.dp, GrayBorder)
+                                border = BorderStroke(1.5.dp, TealPrimary.copy(alpha = 0.5f))
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                                Column(
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
                                     val imgId = if (promo.drawableResName == "img_dead_phone_offer_1782763644093") {
                                         R.drawable.img_dead_phone_offer_1782763644093
@@ -481,44 +489,119 @@ fun LandingView(
                                         R.drawable.img_indian_service_scooter_1782739563064
                                     }
 
-                                    Image(
-                                        painter = painterResource(id = imgId),
-                                        contentDescription = null,
+                                    Box(
                                         modifier = Modifier
-                                            .size(72.dp)
-                                            .clip(RoundedCornerShape(8.dp)),
-                                        contentScale = ContentScale.Crop
-                                    )
-
-                                    Spacer(modifier = Modifier.width(14.dp))
-
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = promo.title,
-                                            color = Color.White,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold
+                                            .fillMaxWidth()
+                                            .height(180.dp)
+                                    ) {
+                                        Image(
+                                            painter = painterResource(id = imgId),
+                                            contentDescription = promo.title,
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
                                         )
-                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(
+                                                    Brush.verticalGradient(
+                                                        colors = listOf(
+                                                            Color.Transparent,
+                                                            Color.Black.copy(alpha = 0.7f)
+                                                        )
+                                                    )
+                                                )
+                                        )
+                                        Surface(
+                                            color = AmberAccent,
+                                            shape = RoundedCornerShape(4.dp),
+                                            modifier = Modifier
+                                                .align(Alignment.TopStart)
+                                                .padding(12.dp)
+                                        ) {
+                                            Text(
+                                                text = "🔥 HOT DEAL",
+                                                color = Color.Black,
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = promo.title,
+                                                color = Color.White,
+                                                fontSize = 18.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Surface(
+                                                color = TealPrimary,
+                                                shape = RoundedCornerShape(6.dp)
+                                            ) {
+                                                Text(
+                                                    text = "₹${promo.offerPrice.toInt()}",
+                                                    color = Color.Black,
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(8.dp))
+
                                         Text(
                                             text = promo.description,
                                             color = GrayText,
-                                            fontSize = 11.sp,
-                                            lineHeight = 15.sp,
-                                            maxLines = 2
+                                            fontSize = 12.5.sp,
+                                            lineHeight = 17.sp
                                         )
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Surface(
-                                            color = TealPrimary,
-                                            shape = RoundedCornerShape(4.dp)
+
+                                        Spacer(modifier = Modifier.height(12.dp))
+
+                                        Button(
+                                            onClick = {
+                                                if (viewModel.isLoggedIn.value) {
+                                                    viewModel.navigateTo(Screen.NewRepairRequest)
+                                                } else {
+                                                    viewModel.navigateTo(Screen.Login)
+                                                }
+                                            },
+                                            colors = ButtonDefaults.buttonColors(containerColor = TealPrimary),
+                                            shape = RoundedCornerShape(8.dp),
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Text(
-                                                text = "SPECIAL PRICE: ₹${promo.offerPrice.toInt()}",
-                                                color = Color.Black,
-                                                fontSize = 9.5.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                            )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Build,
+                                                    contentDescription = null,
+                                                    tint = Color.Black,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = "Claim Offer & Book Diagnosis",
+                                                    color = Color.Black,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 12.sp
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -534,18 +617,23 @@ fun LandingView(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    val isLoggedInState = viewModel.isLoggedIn.value
                     Button(
                         onClick = {
-                            val screen = when (userProfile.role) {
-                                "CUSTOMER" -> Screen.CustomerDashboard
-                                "TECHNICIAN" -> Screen.TechnicianDashboard
-                                "REPAIRMASTER" -> Screen.RepairMasterDashboard
-                                "COORDINATOR" -> Screen.CoordinatorDashboard
-                                "ADMIN" -> Screen.AdminDashboard
-                                "MARKETPLACE_BUYER" -> Screen.Marketplace
-                                else -> Screen.CustomerDashboard
+                            if (isLoggedInState) {
+                                val screen = when (userProfile.role) {
+                                    "CUSTOMER" -> Screen.CustomerDashboard
+                                    "TECHNICIAN" -> Screen.TechnicianDashboard
+                                    "REPAIRMASTER" -> Screen.RepairMasterDashboard
+                                    "COORDINATOR" -> Screen.CoordinatorDashboard
+                                    "ADMIN" -> Screen.AdminDashboard
+                                    "MARKETPLACE_BUYER" -> Screen.Marketplace
+                                    else -> Screen.CustomerDashboard
+                                }
+                                viewModel.navigateTo(screen)
+                            } else {
+                                viewModel.navigateTo(Screen.Login)
                             }
-                            viewModel.navigateTo(screen)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = TealPrimary),
                         shape = RoundedCornerShape(10.dp),
@@ -554,7 +642,12 @@ fun LandingView(
                             .height(48.dp)
                             .testTag("landing_portal_cta")
                     ) {
-                        Text("Enter Active Dashboard", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(
+                            text = if (isLoggedInState) "Enter Active Dashboard" else "Register & Book Repair",
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
                     }
 
                     Button(

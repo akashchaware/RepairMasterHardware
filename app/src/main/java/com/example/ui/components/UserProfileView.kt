@@ -27,6 +27,9 @@ fun UserProfileView(
     modifier: Modifier = Modifier
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
+    val allUserProfiles by viewModel.allUserProfiles.collectAsState()
+    val dbProfile = allUserProfiles.find { it.phone == userProfile.phone }
+    val assignedRolesList = dbProfile?.role?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: listOf(userProfile.role)
 
     var name by remember { mutableStateOf(userProfile.name) }
     var phone by remember { mutableStateOf(userProfile.phone) }
@@ -206,6 +209,68 @@ fun UserProfileView(
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
+                }
+            }
+        }
+
+        // 2.5 DYNAMIC ROLE SWITCHER (For multi-role users)
+        if (assignedRolesList.size > 1) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = NavySurface),
+                border = BorderStroke(1.dp, TealPrimary),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Refresh, contentDescription = null, tint = TealPrimary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "ACTIVE DESK ROLE SELECTOR",
+                            color = TealPrimary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "You are permitted multiple active roles. Tap any button to instantly switch your console dashboard desk.",
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        assignedRolesList.forEach { role ->
+                            val isActive = userProfile.role.uppercase() == role.uppercase()
+                            Button(
+                                onClick = {
+                                    if (!isActive) {
+                                        viewModel.switchRole(role, "", {}, {})
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isActive) TealPrimary else NavyDark,
+                                    contentColor = if (isActive) Color.Black else Color.White
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, if (isActive) TealPrimary else GrayBorder),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = role,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
