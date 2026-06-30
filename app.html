@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RepairMaster - Book Repairs Online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        navyBG: '#0A0F1D',
+                        navySurface: '#121B33',
+                        tealPrimary: '#0D9488',
+                        tealAccent: '#14B8A6',
+                        amberAccent: '#F59E0B',
+                        grayText: '#94A3B8',
+                        grayBorder: '#1E293B'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0A0F1D; color: #F8FAFC; }
+        .glow-teal { box-shadow: 0 0 25px rgba(13, 148, 136, 0.2); }
+        .glow-amber { box-shadow: 0 0 25px rgba(245, 158, 11, 0.15); }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="font-sans antialiased overflow-x-hidden" v-cloak>
+
+<div id="app">
+    <!-- HEADER -->
+    <header class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-40 bg-navyBG/95 backdrop-blur border-b border-grayBorder">
+        <div class="flex items-center gap-3 cursor-pointer" @click="currentPage = 'home'">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-tealPrimary to-amberAccent flex items-center justify-center shadow-lg">
+                <i class="fa-solid fa-screwdriver-wrench text-navyBG text-lg font-black"></i>
+            </div>
+            <span class="font-display text-xl font-bold bg-gradient-to-r from-white to-tealAccent bg-clip-text text-transparent">RepairMaster</span>
+        </div>
+        
+        <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-grayText">
+            <a href="#" @click.prevent="currentPage = 'home'" :class="{'text-white': currentPage === 'home'}" class="hover:text-white transition">Home</a>
+            <a href="#" @click.prevent="currentPage = 'services'" :class="{'text-white': currentPage === 'services'}" class="hover:text-white transition">Services</a>
+            <a href="#" @click.prevent="currentPage = 'offers'" :class="{'text-white': currentPage === 'offers'}" class="hover:text-white transition">Offers</a>
+            <a href="#" @click.prevent="currentPage = 'bookings'" v-if="user" :class="{'text-white': currentPage === 'bookings'}" class="hover:text-white transition">My Bookings</a>
+        </nav>
+        
+        <div class="flex items-center gap-3">
+            <button v-if="!user" @click="loginWithGoogle" class="bg-gradient-to-r from-tealPrimary to-tealAccent text-navyBG px-5 py-2 rounded-xl text-sm font-bold shadow-md hover:scale-105 transition-all flex items-center gap-2">
+                <i class="fa-brands fa-google text-base"></i> Sign In
+            </button>
+            <div v-else class="flex items-center gap-3">
+                <div class="text-right">
+                    <p class="text-sm font-semibold text-white">{{ user.user_metadata?.name || user.email?.split('@')[0] }}</p>
+                </div>
+                <button @click="logout" class="text-grayText hover:text-white transition text-lg">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- HOME PAGE -->
+    <div v-if="currentPage === 'home'" class="min-h-screen">
+        <!-- Hero Section -->
+        <section class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-24">
+            <div class="absolute top-20 left-1/4 w-96 h-96 bg-tealPrimary/10 rounded-full filter blur-[100px] pointer-events-none"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-8 z-10">
+                    <div class="inline-flex items-center gap-2 bg-navySurface border border-grayBorder px-3.5 py-1.5 rounded-full text-xs font-semibold text-tealAccent">
+                        <i class="fa-solid fa-shield-halved text-amberAccent"></i> Secure Repair Platform
+                    </div>
+                    <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
+                        Your <span class="bg-gradient-to-r from-tealAccent to-tealPrimary bg-clip-text text-transparent">One-Stop Repair</span> Hub
+                    </h1>
+                    <p class="text-grayText text-lg max-w-xl leading-relaxed">
+                        Book repairs instantly, connect with certified technicians, and get your devices fixed with guaranteed quality.
+                    </p>
+                    <button @click="currentPage = 'services'" class="bg-gradient-to-r from-tealPrimary to-tealAccent text-navyBG font-bold px-8 py-4 rounded-2xl shadow-xl hover:scale-105 transition-all inline-flex items-center gap-2">
+                        <i class="fa-solid fa-tools"></i> Book a Service Now
+                    </button>
+                </div>
+                <div class="flex justify-center">
+                    <div class="relative w-72 p-3 bg-slate-900 border-4 border-slate-800 rounded-[40px] shadow-2xl glow-teal overflow-hidden">
+                        <div class="bg-navyBG rounded-[32px] overflow-hidden p-6 border border-slate-800/80 space-y-4">
+                            <div class="text-center space-y-2">
+                                <i class="fa-solid fa-check-circle text-5xl text-tealAccent"></i>
+                                <h3 class="text-lg font-bold text-white">Instant Booking</h3>
+                                <p class="text-sm text-grayText">Get your device fixed today</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HOT DEALS SECTION -->
+        <section class="bg-navySurface border-t border-b border-grayBorder py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center space-y-4 mb-12">
+                    <div class="inline-flex items-center gap-1.5 bg-amberAccent/10 text-amberAccent text-xs px-3 py-1 rounded-full font-bold">
+                        <i class="fa-solid fa-fire"></i> Hot Deals
+                    </div>
+                    <h2 class="font-display text-3xl font-bold">Limited Time Offers</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div v-for="offer in offers" :key="offer.id" class="bg-navyBG border border-grayBorder p-6 rounded-2xl space-y-4 hover:border-amberAccent/50 transition">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-bold text-white">{{ offer.name }}</h3>
+                            <span class="text-2xl font-black text-amberAccent">{{ offer.discount_percent }}%</span>
+                        </div>
+                        <p class="text-sm text-grayText">{{ offer.description }}</p>
+                        <p class="text-xs text-tealAccent"><i class="fa-solid fa-calendar"></i> Valid until {{ new Date(offer.valid_to).toLocaleDateString() }}</p>
+                        <button @click="currentPage = 'services'" class="w-full bg-gradient-to-r from-tealPrimary to-tealAccent text-navyBG py-2 rounded-lg font-bold hover:scale-105 transition text-sm">
+                            Claim Offer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FEATURES -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-navySurface border border-grayBorder p-8 rounded-2xl space-y-4">
+                    <i class="fa-solid fa-star text-3xl text-tealAccent"></i>
+                    <h3 class="text-lg font-bold text-white">Certified Technicians</h3>
+                    <p class="text-sm text-grayText">Expert repairs by certified professionals with years of experience.</p>
+                </div>
+                <div class="bg-navySurface border border-grayBorder p-8 rounded-2xl space-y-4">
+                    <i class="fa-solid fa-shield-alt text-3xl text-tealAccent"></i>
+                    <h3 class="text-lg font-bold text-white">Quality Guarantee</h3>
+                    <p class="text-sm text-grayText">180-day warranty on all repairs and replacement parts.</p>
+                </div>
+                <div class="bg-navySurface border border-grayBorder p-8 rounded-2xl space-y-4">
+                    <i class="fa-solid fa-bolt text-3xl text-tealAccent"></i>
+                    <h3 class="text-lg font-bold text-white">Quick Service</h3>
+                    <p class="text-sm text-grayText">Same-day repairs available for most services.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- SERVICES PAGE -->
+    <div v-if="currentPage === 'services'" class="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 class="font-display text-4xl font-bold mb-4">Our Repair Services</h1>
+        <p class="text-grayText mb-12">Choose a service and book your repair instantly</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div v-for="service in services" :key="service.id" class="bg-navySurface border border-grayBorder p-6 rounded-2xl space-y-4 hover:border-tealAccent/50 transition glow-teal">
+                <h3 class="text-xl font-bold text-white">{{ service.name }}</h3>
+                <p class="text-sm text-grayText">{{ service.description }}</p>
+                <div class="flex items-center justify-between pt-4 border-t border-grayBorder">
+                    <span class="text-2xl font-black text-tealAccent">₹{{ service.price }}</span>
+                    <button @click="selectService(service)" class="bg-gradient-to-r from-tealPrimary to-tealAccent text-navyBG px-4 py-2 rounded-lg font-bold hover:scale-105 transition">
+                        Book Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OFFERS PAGE -->
+    <div v-if="currentPage === 'offers'" class="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 class="font-display text-4xl font-bold mb-4">Current Offers & Deals</h1>
+        <p class="text-grayText mb-12">Check out our exclusive promotions and discounts</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div v-for="offer in offers" :key="offer.id" class="bg-gradient-to-br from-navySurface to-navyBG border border-amberAccent/30 p-8 rounded-2xl space-y-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white">{{ offer.name }}</h3>
+                        <p class="text-sm text-grayText mt-2">{{ offer.description }}</p>
+                    </div>
+                    <span class="bg-amberAccent text-navyBG px-4 py-2 rounded-full font-black text-lg">-{{ offer.discount_percent }}%</span>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-xs text-grayText"><i class="fa-solid fa-calendar"></i> Valid until {{ new Date(offer.valid_to).toLocaleDateString() }}</p>
+                    <button @click="currentPage = 'services'" class="w-full bg-gradient-to-r from-tealPrimary to-tealAccent text-navyBG py-3 rounded-lg font-bold hover:scale-105 transition">
+                        Claim Offer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOOKING FORM MODAL -->
+    <div v-if="showBookingForm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-navySurface border border-grayBorder rounded-2xl p-8 max-w-2xl w-full space-y-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center">
+                <h2 class="font-display text-2xl font-bold">Book {{ selectedService?.name }}</h2>
+                <button @click="closeBooking" class="text-grayText hover:text-white text-2xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div v-if="!user" class="bg-amberAccent/10 border border-amberAccent text-amberAccent p-4 rounded-lg space-y-3">
+                <p>Please sign in with Google to book a service.</p>
+                <button @click="loginWithGoogle" class="w-full bg-amberAccent text-navyBG px-6 py-2 rounded-lg font-bold hover:scale-105 transition">
+                    Sign In with Google
+                </button>
+            </div>
+
+            <form v-else @submit.prevent="bookService" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-white mb-2">Device Model *</label>
+                    <input v-model="bookingForm.device_model" type="text" required placeholder="e.g., iPhone 13, Samsung Galaxy A12" class="w-full bg-navyBG border border-grayBorder text-white rounded-lg px-4 py-3 focus:border-tealAccent focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-white mb-2">Preferred Date & Time *</label>
+                    <input v-model="bookingForm.booking_date" type="datetime-local" required class="w-full bg-navyBG border border-grayBorder text-white rounded-lg px-4 py-3 focus:border-tealAccent focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-white mb-2">Problem Description *</label>
+                    <textarea v-model="bookingForm.problem_description" required placeholder="Describe the issue with your device..." class="w-full bg-navyBG border border-grayBorder text-white rounded-lg px-4 py-3 focus:border-tealAccent focus:outline-none h-24"></textarea>
+                </div>
+
+                <div class="bg-navyBG border border-grayBorder p-4 rounded-lg space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-grayText">Service Price:</span>
+                        <span class="text-white font-bold">₹{{ selectedService?.price }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm pt-2 border-t border-grayBorder">
+                        <span class="text-white font-bold">Estimated Total:</span>
+                        <span class="text-tealAccent font-bold text-lg">₹{{ selectedService?.price }}</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="submit" :disabled="bookingLoading" class="flex-1 bg-gradient-to-r from-tealPrimary to-tealAccent text-navyBG py-3 rounded-lg font-bold hover:scale-105 transition disabled:opacity-50">
+                        {{ bookingLoading ? 'Booking...' : 'Confirm Booking' }}
+                    </button>
+                    <button type="button" @click="closeBooking" class="flex-1 bg-grayBorder text-white py-3 rounded-lg font-bold hover:bg-grayBorder/80 transition">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- BOOKINGS PAGE -->
+    <div v-if="currentPage === 'bookings'" class="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 class="font-display text-4xl font-bold mb-12">My Bookings</h1>
+        
+        <div v-if="!user" class="text-center py-12">
+            <p class="text-grayText text-lg mb-4">Please sign in to view your bookings.</p>
+            <button @click="loginWithGoogle" class="bg-tealAccent text-navyBG px-6 py-3 rounded-lg font-bold hover:scale-105 transition">
+                Sign In with Google
+            </button>
+        </div>
+
+        <div v-else-if="userBookings.length === 0" class="text-center py-12">
+            <i class="fa-solid fa-inbox text-6xl text-grayText/50 mb-4"></i>
+            <p class="text-grayText text-lg">No bookings yet. <a href="#" @click.prevent="currentPage = 'services'" class="text-tealAccent hover:underline">Book a service now!</a></p>
+        </div>
+
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div v-for="booking in userBookings" :key="booking.id" class="bg-navySurface border border-grayBorder p-6 rounded-2xl space-y-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">{{ booking.service?.name }}</h3>
+                        <p class="text-sm text-grayText mt-1">📱 {{ booking.device_model }}</p>
+                    </div>
+                    <span :class="['px-3 py-1 rounded-full text-xs font-bold', 
+                        booking.status === 'confirmed' ? 'bg-tealAccent/20 text-tealAccent' : 
+                        booking.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
+                        booking.status === 'pending' ? 'bg-amber-500/20 text-amberAccent' :
+                        'bg-red-500/20 text-red-400'
+                    ]">
+                        {{ booking.status }}
+                    </span>
+                </div>
+                <p class="text-sm text-grayText">{{ booking.problem_description }}</p>
+                <div class="flex justify-between pt-4 border-t border-grayBorder">
+                    <span class="text-lg font-bold text-tealAccent">₹{{ booking.price }}</span>
+                    <span class="text-sm text-grayText"><i class="fa-solid fa-calendar"></i> {{ new Date(booking.booking_date).toLocaleDateString() }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+<script>
+const { createApp } = Vue;
+const { createClient } = supabase;
+
+// Initialize Supabase
+const supabaseUrl = 'https://mpcnfrshpgcpmrgledwy.supabase.co';
+const supabaseKey = 'sb_publishable_IlSzuHbWowZ84IdxRwBCxg_DDT9P_Vz';
+const sb = createClient(supabaseUrl, supabaseKey);
+
+createApp({
+    data() {
+        return {
+            currentPage: 'home',
+            user: null,
+            services: [],
+            offers: [],
+            userBookings: [],
+            selectedService: null,
+            showBookingForm: false,
+            bookingLoading: false,
+            bookingForm: {
+                device_model: '',
+                booking_date: '',
+                problem_description: ''
+            }
+        }
+    },
+    async mounted() {
+        // Check if user is already logged in
+        const { data } = await sb.auth.getSession();
+        this.user = data.session?.user || null;
+
+        // Subscribe to auth changes
+        sb.auth.onAuthStateChange((event, session) => {
+            this.user = session?.user || null;
+            if (this.user) {
+                this.fetchUserBookings();
+            }
+        });
+
+        // Load services and offers
+        this.loadServices();
+        this.loadOffers();
+    },
+    methods: {
+        async loginWithGoogle() {
+            try {
+                const { data, error } = await sb.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.href
+                    }
+                });
+                if (error) console.error('Login error:', error);
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        },
+        async logout() {
+            await sb.auth.signOut();
+            this.user = null;
+            this.currentPage = 'home';
+        },
+        async loadServices() {
+            try {
+                const { data, error } = await sb.from('services').select('*').eq('active', true);
+                if (error) throw error;
+                this.services = data || [];
+            } catch (err) {
+                console.error('Error loading services:', err);
+                alert('Error loading services. Please check Supabase setup.');
+            }
+        },
+        async loadOffers() {
+            try {
+                const { data, error } = await sb.from('offers').select('*').eq('active', true);
+                if (error) throw error;
+                this.offers = data || [];
+            } catch (err) {
+                console.error('Error loading offers:', err);
+            }
+        },
+        async fetchUserBookings() {
+            if (!this.user) return;
+            try {
+                const { data, error } = await sb
+                    .from('bookings')
+                    .select('*, service:services(name)')
+                    .eq('user_id', this.user.id)
+                    .order('created_at', { ascending: false });
+                if (error) throw error;
+                this.userBookings = data || [];
+            } catch (err) {
+                console.error('Error loading bookings:', err);
+            }
+        },
+        selectService(service) {
+            this.selectedService = service;
+            this.showBookingForm = true;
+            this.bookingForm = { device_model: '', booking_date: '', problem_description: '' };
+        },
+        closeBooking() {
+            this.showBookingForm = false;
+            this.selectedService = null;
+        },
+        async bookService() {
+            if (!this.user || !this.selectedService) return;
+
+            this.bookingLoading = true;
+            try {
+                // First create user profile if not exists
+                await sb.from('users').insert([
+                    { id: this.user.id, email: this.user.email, name: this.user.user_metadata?.name }
+                ]).onConflict('id').ignore();
+
+                // Create booking
+                const { error } = await sb.from('bookings').insert([{
+                    user_id: this.user.id,
+                    service_id: this.selectedService.id,
+                    device_model: this.bookingForm.device_model,
+                    booking_date: this.bookingForm.booking_date,
+                    problem_description: this.bookingForm.problem_description,
+                    price: this.selectedService.price,
+                    status: 'pending'
+                }]);
+
+                if (!error) {
+                    alert('✅ Booking confirmed! Our team will contact you soon.');
+                    this.closeBooking();
+                    this.fetchUserBookings();
+                    this.currentPage = 'bookings';
+                } else {
+                    alert('Error booking service: ' + error.message);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                this.bookingLoading = false;
+            }
+        }
+    }
+}).mount('#app');
+</script>
+
+</body>
+</html>
