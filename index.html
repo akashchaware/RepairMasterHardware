@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RepairMaster - Premium Gadget & Appliance Repair Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Space Grotesk & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        navyBG: '#0A0F1D',
+                        navySurface: '#121B33',
+                        tealPrimary: '#0D9488', // Teal 600
+                        tealAccent: '#14B8A6', // Teal 500
+                        amberAccent: '#F59E0B', // Amber 500
+                        grayText: '#94A3B8', // Slate 400
+                        grayBorder: '#1E293B' // Slate 800
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0A0F1D;
+            color: #F8FAFC;
+        }
+        .glow-teal {
+            box-shadow: 0 0 25px rgba(13, 148, 136, 0.2);
+        }
+        .glow-amber {
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.15);
+        }
+    </style>
+</head>
+<body class="font-sans antialiased overflow-x-hidden">
+
+    <!-- Top Sticky Announcement Bar -->
+    <div class="bg-gradient-to-r from-tealPrimary to-navySurface border-b border-tealPrimary/30 text-white text-xs sm:text-sm py-2.5 px-4 text-center font-medium sticky top-0 z-50 flex items-center justify-center">
+        <span class="bg-amberAccent text-navyBG text-[10px] uppercase font-bold px-2 py-0.5 rounded-full">New Release</span>
+        <span class="mx-2">RepairMaster Android App v2.0 is officially live!</span>
+        <a href="#download" class="underline hover:text-amberAccent font-bold inline-flex items-center gap-1 transition">
+            <i class="fa-solid fa-circle-down"></i> Download APK Now
+        </a>
+    </div>
+
+    <!-- Main Navigation Header -->
+    <header class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-tealPrimary to-amberAccent flex items-center justify-center shadow-lg">
+                <i class="fa-solid fa-screwdriver-wrench text-navyBG text-lg font-black"></i>
+            </div>
+            <div>
+                <span class="font-display text-xl font-bold tracking-tight bg-gradient-to-r from-white to-tealAccent bg-clip-text text-transparent">RepairMaster</span>
+                <span class="text-[10px] block text-tealAccent font-bold uppercase tracking-wider -mt-1">Nagpur Hub</span>
+            </div>
+        </div>
+        <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-grayText">
+            <a href="#features" class="hover:text-white transition">Features</a>
+            <a href="#demo" class="hover:text-white transition">Demo Accounts</a>
+            <a href="#calculator" class="hover:text-white transition">Estimate Tool</a>
+            <a href="#install-guide" class="hover:text-white transition">Installation Guide</a>
+        </nav>
+        <div class="flex items-center gap-3">
+            <a href="#download" class="bg-gradient-to-r from-tealPrimary to-tealAccent text-navyBG px-5 py-2 rounded-xl text-sm font-bold shadow-md hover:scale-105 transition-all flex items-center gap-2">
+                <i class="fa-brands fa-android text-base"></i> Download App
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-24 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <!-- Background Blur Decorative Element -->
+        <div class="absolute top-20 left-1/4 w-96 h-96 bg-tealPrimary/10 rounded-full filter blur-[100px] pointer-events-none"></div>
+        <div class="absolute bottom-10 right-10 w-96 h-96 bg-amberAccent/5 rounded-full filter blur-[120px] pointer-events-none"></div>
+
+        <div class="lg:col-span-7 space-y-8 z-10">
+            <div class="inline-flex items-center gap-2 bg-navySurface border border-grayBorder px-3.5 py-1.5 rounded-full text-xs font-semibold text-tealAccent">
+                <i class="fa-solid fa-shield-halved text-amberAccent"></i> Secure Nagpur Repair Ecosystem
+            </div>
+            <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
+                Your One-Stop Platform for <span class="bg-gradient-to-r from-tealAccent to-tealPrimary bg-clip-text text-transparent">Gadget & Appliance Repairs</span>
+            </h1>
+            <p class="text-grayText text-base sm:text-lg max-w-xl leading-relaxed">
+                Connect directly with certified technicians, request onsite appliance support, purchase spare parts at transparent wholesale prices, or register as a partner affiliate.
+            </p>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
+                <a href="#download" class="bg-gradient-to-r from-tealPrimary to-tealAccent text-navyBG font-bold text-center px-8 py-4 rounded-2xl shadow-xl hover:shadow-tealPrimary/20 hover:scale-105 transition-all flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-cloud-arrow-down text-lg"></i>
+                    <div>
+                        <span class="block text-xs uppercase opacity-75 font-semibold text-left -mb-0.5">Android Client</span>
+                        <span class="text-base font-extrabold tracking-wide">Download RepairMaster APK</span>
+                    </div>
+                </a>
+                <a href="#demo" class="bg-navySurface border border-grayBorder hover:border-tealPrimary/50 text-white font-medium text-center px-6 py-4 rounded-2xl transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-users text-tealAccent"></i> Try Demo Portals
+                </a>
+            </div>
+            <!-- Trust Badge Info -->
+            <div class="grid grid-cols-3 gap-6 pt-6 border-t border-grayBorder">
+                <div>
+                    <span class="block text-2xl font-bold text-white font-display">Nagpur</span>
+                    <span class="text-xs text-grayText">Authorized Hub</span>
+                </div>
+                <div>
+                    <span class="block text-2xl font-bold text-tealAccent font-display">100%</span>
+                    <span class="text-xs text-grayText">Secure Local DB</span>
+                </div>
+                <div>
+                    <span class="block text-2xl font-bold text-amberAccent font-display">Multi-Role</span>
+                    <span class="text-xs text-grayText">Admin, Tech & Client</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5 flex justify-center relative z-10">
+            <!-- App UI Preview Device Frame Mockup -->
+            <div class="relative w-72 sm:w-80 p-3 bg-slate-900 border-4 border-slate-800 rounded-[40px] shadow-2xl glow-teal overflow-hidden">
+                <div class="absolute top-0 inset-x-0 h-4 bg-slate-800 rounded-b-xl flex justify-center items-center">
+                    <div class="w-16 h-3 bg-black rounded-full"></div>
+                </div>
+                <!-- App Screen Simulator Content -->
+                <div class="bg-navyBG rounded-[32px] overflow-hidden p-4 border border-slate-800/80 aspect-[9/19] flex flex-col justify-between">
+                    <div class="flex justify-between items-center text-[10px] text-grayText mt-1">
+                        <span>RepairMaster Nagpur</span>
+                        <div class="flex gap-1 items-center">
+                            <i class="fa-solid fa-wifi text-[8px]"></i>
+                            <i class="fa-solid fa-battery-three-quarters text-[8px]"></i>
+                            <span>10:30 AM</span>
+                        </div>
+                    </div>
+
+                    <!-- App Login screen representation -->
+                    <div class="my-auto space-y-4">
+                        <div class="flex flex-col items-center gap-1.5">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-tealPrimary to-amberAccent flex items-center justify-center shadow-lg">
+                                <i class="fa-solid fa-screwdriver-wrench text-navyBG text-base font-black"></i>
+                            </div>
+                            <h3 class="text-sm font-bold font-display text-white">RepairMaster Nagpur</h3>
+                            <p class="text-[9px] text-grayText">Secure Client & Technician Portal</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="bg-navySurface border border-tealPrimary/30 rounded-lg p-2 flex items-center gap-2">
+                                <i class="fa-solid fa-phone text-[9px] text-tealAccent"></i>
+                                <div class="text-left">
+                                    <span class="text-[8px] text-grayText block">Registered Phone</span>
+                                    <span class="text-[10px] font-bold text-white">+91 95225 02707</span>
+                                </div>
+                            </div>
+                            <div class="bg-navySurface border border-grayBorder rounded-lg p-2 flex items-center gap-2">
+                                <i class="fa-solid fa-lock text-[9px] text-grayText"></i>
+                                <div class="text-left w-full flex justify-between items-center">
+                                    <div>
+                                        <span class="text-[8px] text-grayText block">Enter Passcode / Password</span>
+                                        <span class="text-[10px] font-bold text-white">••••••••••</span>
+                                    </div>
+                                    <i class="fa-solid fa-eye-slash text-[9px] text-grayText mr-1"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="w-full py-2 bg-gradient-to-r from-tealPrimary to-tealAccent rounded-lg text-[10px] text-navyBG font-extrabold shadow-md uppercase tracking-wider">
+                            Access Control Panel
+                        </button>
+
+                        <div class="text-center">
+                            <span class="text-[8px] text-grayText">Role System Secured by Real-time Local DAO</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-navySurface/80 border border-tealPrimary/10 rounded-xl p-2 text-center">
+                        <span class="text-[8px] text-amberAccent block font-bold">Logged-In Role: ADMIN</span>
+                        <span class="text-[7px] text-grayText block mt-0.5">Control center for parts & technicians</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Decorative circle highlight -->
+            <div class="absolute -z-10 -bottom-10 -left-10 w-48 h-48 bg-amberAccent/10 rounded-full filter blur-xl"></div>
+        </div>
+    </section>
+
+    <!-- App Downloads Section -->
+    <section id="download" class="bg-navySurface border-y border-grayBorder py-16 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-gradient-to-tr from-navyBG to-navySurface border border-tealPrimary/20 rounded-3xl p-8 sm:p-12 relative overflow-hidden">
+                <div class="absolute -right-24 -top-24 w-80 h-80 bg-tealPrimary/10 rounded-full filter blur-[80px] pointer-events-none"></div>
+                <div class="absolute -left-24 -bottom-24 w-80 h-80 bg-amberAccent/5 rounded-full filter blur-[80px] pointer-events-none"></div>
+
+                <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <div class="lg:col-span-8 space-y-5">
+                        <div class="inline-flex items-center gap-2 bg-tealPrimary/20 text-tealAccent text-xs px-3 py-1 rounded-full font-bold">
+                            <i class="fa-solid fa-download"></i> Direct Secure Download
+                        </div>
+                        <h2 class="font-display text-3xl sm:text-4xl font-bold tracking-tight text-white">
+                            Get the Official Android Application
+                        </h2>
+                        <p class="text-grayText text-sm sm:text-base leading-relaxed">
+                            We host our Android APK directly to ensure your security and privacy. The APK package is fully compiled, digitally signed, and ready to install on your Android device.
+                        </p>
+                        <div class="flex flex-wrap gap-4 pt-2">
+                            <!-- Direct Download Trigger -->
+                            <a href="https://github.com/akashchaware/RepairMasterHardware/releases/download/v2.0/RepairMaster-v2.0.apk" class="bg-gradient-to-r from-tealPrimary to-tealAccent text-navyBG px-6 py-3 rounded-xl font-bold shadow-md hover:scale-105 transition-all inline-flex items-center gap-2">
+                                <i class="fa-solid fa-circle-down text-base"></i> Download APK
+                            </a>
+                            <div class="flex items-center gap-2 text-xs text-grayText border border-grayBorder bg-navyBG/50 px-4 py-2.5 rounded-xl">
+                                <i class="fa-solid fa-fingerprint text-tealAccent"></i>
+                                <span>SHA-256 Verified: Secure & Untampered</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- APK Details Stats Box -->
+                    <div class="lg:col-span-4 bg-navyBG border border-grayBorder p-6 rounded-2xl space-y-4">
+                        <span class="text-xs uppercase tracking-wider text-tealAccent font-bold">Package Information</span>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between pb-2 border-b border-grayBorder">
+                                <span class="text-grayText">Application Name</span>
+                                <span class="font-bold text-white">RepairingMaster</span>
+                            </div>
+                            <div class="flex justify-between pb-2 border-b border-grayBorder">
+                                <span class="text-grayText">Package Version</span>
+                                <span class="font-bold text-white">2.0.1 (Nagpur Release)</span>
+                            </div>
+                            <div class="flex justify-between pb-2 border-b border-grayBorder">
+                                <span class="text-grayText">Target SDK</span>
+                                <span class="font-bold text-white">Android 34 (Upside Down Cake)</span>
+                            </div>
+                            <div class="flex justify-between pb-2 border-b border-grayBorder">
+                                <span class="text-grayText">Minimum SDK</span>
+                                <span class="font-bold text-white">Android 26 (Oreo)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-grayText">Platform Status</span>
+                                <span class="font-bold text-emerald-400 inline-flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active & Stable
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation steps section -->
+    <section id="install-guide" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="text-center space-y-4 max-w-2xl mx-auto mb-16">
+            <h2 class="font-display text-3xl font-bold">How to Install RepairMaster on Android</h2>
+            <p class="text-grayText text-sm">Follow these quick security steps to enable native installation on your device.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Step 1 -->
+            <div class="bg-navySurface border border-grayBorder p-8 rounded-2xl relative space-y-4">
+                <span class="absolute right-6 top-4 font-display text-5xl font-black text-tealPrimary/15">01</span>
+                <div class="w-12 h-12 rounded-xl bg-tealPrimary/10 border border-tealPrimary/30 flex items-center justify-center text-tealAccent">
+                    <i class="fa-solid fa-download text-lg"></i>
+                </div>
+                <h3 class="text-lg font-bold font-display text-white">1. Download APK</h3>
+                <p class="text-grayText text-sm leading-relaxed">
+                    Click the "Download APK" button to pull the compiled APK binary onto your mobile device.
+                </p>
+            </div>
+            <!-- Step 2 -->
+            <div class="bg-navySurface border border-grayBorder p-8 rounded-2xl relative space-y-4">
+                <span class="absolute right-6 top-4 font-display text-5xl font-black text-amberAccent/15">02</span>
+                <div class="w-12 h-12 rounded-xl bg-amberAccent/10 border border-amberAccent/30 flex items-center justify-center text-amberAccent">
+                    <i class="fa-solid fa-gears text-lg"></i>
+                </div>
+                <h3 class="text-lg font-bold font-display text-white">2. Enable Unknown Sources</h3>
+                <p class="text-grayText text-sm leading-relaxed">
+                    If prompted by Android, go to Settings > Security, or click "Allow installation from this source" in your web browser permissions dialog.
+                </p>
+            </div>
+            <!-- Step 3 -->
+            <div class="bg-navySurface border border-grayBorder p-8 rounded-2xl relative space-y-4">
+                <span class="absolute right-6 top-4 font-display text-5xl font-black text-tealPrimary/15">03</span>
+                <div class="w-12 h-12 rounded-xl bg-tealPrimary/10 border border-tealPrimary/30 flex items-center justify-center text-tealAccent">
+                    <i class="fa-solid fa-check-double text-lg"></i>
+                </div>
+                <h3 class="text-lg font-bold font-display text-white">3. Install & Start Repairing</h3>
+                <p class="text-grayText text-sm leading-relaxed">
+                    Open the downloaded file from your notifications list or File Manager, tap Install, and launch RepairMaster!
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Accounts Hub Section -->
+    <section id="demo" class="bg-navySurface border-t border-b border-grayBorder py-20 relative">
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-tealPrimary/5 to-transparent pointer-events-none"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center space-y-4 max-w-2xl mx-auto mb-16">
+                <div class="inline-flex items-center gap-1.5 bg-amberAccent/10 text-amberAccent text-xs px-3 py-1 rounded-full font-bold">
+                    <i class="fa-solid fa-key"></i> Preseeded Demo Accounts for Testers
+                </div>
+                <h2 class="font-display text-3xl font-bold">Test Multi-Role System Access Instantly</h2>
+                <p class="text-grayText text-sm">Our Nagpur database includes four preseeded demo accounts to help you test and explore all dashboards immediately.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Admin Card -->
+                <div class="bg-navyBG border border-tealPrimary/50 p-6 rounded-2xl space-y-4 relative overflow-hidden flex flex-col justify-between">
+                    <div class="absolute -right-6 -top-6 w-16 h-16 bg-tealPrimary/20 rounded-full filter blur-md"></div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs bg-amberAccent text-navyBG font-extrabold px-2.5 py-0.5 rounded-md uppercase">ADMIN OWNER</span>
+                            <i class="fa-solid fa-user-gear text-tealAccent text-lg"></i>
+                        </div>
+                        <h3 class="text-lg font-bold font-display text-white">Admin Dashboard</h3>
+                        <p class="text-xs text-grayText">Manage spare parts, approve contractor applications, review client jobs, and assign user roles securely.</p>
+                    </div>
+                    <div class="pt-4 border-t border-grayBorder space-y-2 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-grayText">Phone (Login):</span>
+                            <span class="font-mono text-white font-bold">+91 95225 02707</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-grayText">Secure Passcode:</span>
+                            <span class="font-mono text-amberAccent font-bold">admin@rm2024</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Card -->
+                <div class="bg-navyBG border border-grayBorder p-6 rounded-2xl space-y-4 flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs bg-tealPrimary/20 text-tealAccent font-bold px-2.5 py-0.5 rounded-md">CUSTOMER</span>
+                            <i class="fa-solid fa-user text-grayText text-lg"></i>
+                        </div>
+                        <h3 class="text-lg font-bold font-display text-white">Client Self-Repair</h3>
+                        <p class="text-xs text-grayText">Access custom self-repair pricing estimates, check device compatibility checklists, and track live repairs.</p>
+                    </div>
+                    <div class="pt-4 border-t border-grayBorder space-y-2 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-grayText">Phone (Login):</span>
+                            <span class="font-mono text-white font-bold">+91 98230 12345</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-grayText">Secure Passcode:</span>
+                            <span class="font-mono text-tealAccent font-bold">12345</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technician Card -->
+                <div class="bg-navyBG border border-grayBorder p-6 rounded-2xl space-y-4 flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs bg-indigo-500/10 text-indigo-400 font-bold px-2.5 py-0.5 rounded-md">TECHNICIAN</span>
+                            <i class="fa-solid fa-screwdriver text-grayText text-lg"></i>
+                        </div>
+                        <h3 class="text-lg font-bold font-display text-white">Technician Panel</h3>
+                        <p class="text-xs text-grayText">Accept locally matching repair assignments, update repair milestones, and track technician earnings payouts.</p>
+                    </div>
+                    <div class="pt-4 border-t border-grayBorder space-y-2 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-grayText">Phone (Login):</span>
+                            <span class="font-mono text-white font-bold">+91 98230 55555</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-grayText">Secure Passcode:</span>
+                            <span class="font-mono text-tealAccent font-bold">tech@rm2024</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Repair Master Card -->
+                <div class="bg-navyBG border border-grayBorder p-6 rounded-2xl space-y-4 flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs bg-emerald-500/10 text-emerald-400 font-bold px-2.5 py-0.5 rounded-md">REPAIR MASTER</span>
+                            <i class="fa-solid fa-store text-grayText text-lg"></i>
+                        </div>
+                        <h3 class="text-lg font-bold font-display text-white">Retail Affiliate Store</h3>
+                        <p class="text-xs text-grayText">Prepopulate retail stocks, review trade margins, and integrate spare part orders directly into local contractor shops.</p>
+                    </div>
+                    <div class="pt-4 border-t border-grayBorder space-y-2 text-xs">
+                        <div class="flex justify-between">
+                            <span class="text-grayText">Phone (Login):</span>
+                            <span class="font-mono text-white font-bold">+91 98230 77777</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-grayText">Secure Passcode:</span>
+                            <span class="font-mono text-tealAccent font-bold">master@rm2024</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Estimation tool Widget -->
+    <section id="calculator" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div class="lg:col-span-6 space-y-6">
+                <div class="inline-flex items-center gap-1.5 bg-tealPrimary/15 text-tealAccent text-xs px-3 py-1 rounded-full font-bold">
+                    <i class="fa-solid fa-chart-line"></i> Dynamic Web Widget
+                </div>
+                <h2 class="font-display text-3xl font-bold tracking-tight text-white">Calculate Estimated Service Cost Instantly</h2>
+                <p class="text-grayText text-sm leading-relaxed">
+                    This interactive tool demonstrates our smart pricing system. Select your device and requested repair category to calculate the base service rate combined with our standard platform surcharge.
+                </p>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-full bg-tealPrimary/10 border border-tealPrimary/30 flex items-center justify-center text-xs text-tealAccent font-bold">✓</span>
+                        <span class="text-xs text-grayText font-medium">100% Genuine Spare Parts Sourcing</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-full bg-tealPrimary/10 border border-tealPrimary/30 flex items-center justify-center text-xs text-tealAccent font-bold">✓</span>
+                        <span class="text-xs text-grayText font-medium">180-Day Guarantee on Premium Replacements</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cost Calculator Widget Box -->
+            <div class="lg:col-span-6 bg-navySurface border border-grayBorder p-8 rounded-3xl glow-teal relative">
+                <div class="space-y-6">
+                    <h3 class="text-lg font-bold font-display text-white border-b border-grayBorder pb-3 flex justify-between items-center">
+                        <span>Pricing Calculator</span>
+                        <span class="text-xs text-tealAccent font-normal uppercase">Nagpur Area</span>
+                    </h3>
+
+                    <!-- Device Type selector -->
+                    <div class="space-y-2">
+                        <label class="text-xs text-grayText uppercase font-bold block">Select Device Brand</label>
+                        <select id="deviceSelect" onchange="calculatePrice()" class="w-full bg-navyBG border border-grayBorder text-white text-sm rounded-xl p-3 focus:border-tealPrimary focus:outline-none">
+                            <option value="iphone" data-multiplier="1.2">Apple iPhone (Premium Tier)</option>
+                            <option value="samsung" data-multiplier="1.1" selected>Samsung Galaxy (Flagship / Mid)</option>
+                            <option value="xiaomi" data-multiplier="0.95">Xiaomi / Redmi (Budget Tier)</option>
+                            <option value="oneplus" data-multiplier="1.05">OnePlus Series</option>
+                        </select>
+                    </div>
+
+                    <!-- Repair Category selector -->
+                    <div class="space-y-2">
+                        <label class="text-xs text-grayText uppercase font-bold block">Select Repair Service</label>
+                        <select id="serviceSelect" onchange="calculatePrice()" class="w-full bg-navyBG border border-grayBorder text-white text-sm rounded-xl p-3 focus:border-tealPrimary focus:outline-none">
+                            <option value="screen" data-base="3500">Premium Display / Screen Replacement</option>
+                            <option value="battery" data-base="1500" selected>Certified Lithium-Ion Battery Swap</option>
+                            <option value="charging" data-base="1100">Type-C / Charging Port Repair</option>
+                            <option value="motherboard" data-base="5500">Advanced Micro-Soldering & IC Diagnostic</option>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic pricing breakdown -->
+                    <div class="bg-navyBG border border-grayBorder p-5 rounded-2xl space-y-3.5">
+                        <div class="flex justify-between text-xs text-grayText">
+                            <span>Base Service Fee:</span>
+                            <span id="baseFeeText" class="font-mono text-white font-bold">₹1,500.00</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-grayText">
+                            <span>Brand Multiplier Charge:</span>
+                            <span id="multiplierText" class="font-mono text-white font-bold">1.10x</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-grayText">
+                            <span>Admin Platform Surcharge (15%):</span>
+                            <span id="surchargeText" class="font-mono text-amberAccent font-bold">₹247.50</span>
+                        </div>
+                        <div class="border-t border-grayBorder pt-3.5 flex justify-between items-center">
+                            <span class="text-sm font-bold text-white">Estimated Total:</span>
+                            <span id="totalText" class="font-display text-xl font-extrabold text-tealAccent">₹1,897.50</span>
+                        </div>
+                    </div>
+
+                    <a href="#download" class="w-full py-4 bg-gradient-to-r from-tealPrimary to-tealAccent rounded-xl text-navyBG text-center font-extrabold block text-sm shadow-md hover:scale-105 transition-all">
+                        Book Service via Mobile App
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Web Footer Section -->
+    <footer class="bg-navyBG border-t border-grayBorder py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-tealPrimary to-amberAccent flex items-center justify-center">
+                    <i class="fa-solid fa-screwdriver-wrench text-navyBG text-sm font-black"></i>
+                </div>
+                <div>
+                    <span class="font-display text-lg font-bold tracking-tight text-white">RepairMaster</span>
+                </div>
+            </div>
+            
+            <p class="text-xs text-grayText text-center md:text-right">
+                &copy; 2026 RepairMaster Inc. Nagpur Hub. All Rights Reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Interactive script for dynamic estimation tool -->
+    <script>
+        function calculatePrice() {
+            var deviceDropdown = document.getElementById("deviceSelect");
+            var serviceDropdown = document.getElementById("serviceSelect");
+            
+            var selectedDevice = deviceDropdown.options[deviceDropdown.selectedIndex];
+            var selectedService = serviceDropdown.options[serviceDropdown.selectedIndex];
+            
+            var multiplier = parseFloat(selectedDevice.getAttribute("data-multiplier"));
+            var baseFee = parseFloat(selectedService.getAttribute("data-base"));
+            
+            var serviceSubtotal = baseFee * multiplier;
+            var platformSurcharge = serviceSubtotal * 0.15; // 15% custom surcharge from Admin panel
+            var totalEstimate = serviceSubtotal + platformSurcharge;
+            
+            document.getElementById("baseFeeText").innerText = "₹" + baseFee.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById("multiplierText").innerText = multiplier.toFixed(2) + "x";
+            document.getElementById("surchargeText").innerText = "₹" + platformSurcharge.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById("totalText").innerText = "₹" + totalEstimate.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // Initial run on page load
+        window.onload = function() {
+            calculatePrice();
+        };
+    </script>
+</body>
+</html>
